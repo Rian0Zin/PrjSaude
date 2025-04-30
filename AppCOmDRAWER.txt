@@ -1,0 +1,31 @@
+import { StatusBar } from 'expo-status-bar';
+import { NavigationContainer } from '@react-navigation/native';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { Text, View, Image, StyleSheet} from "react-native";
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Home from './src/pages/Home';
+import Sobre from './src/pages/Sobre';
+import Cadastro from './src/pages/Cadastro';
+import Cadastro2 from './src/pages/Cadastro/cadastro2';
+import Cadastro3 from './src/pages/Cadastro/cadastro3';
+import IMC from './src/pages/IMC';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+const Drawer = createDrawerNavigator();
+import Header from './src/Components/Header';
+
+export default function App() {
+  return (
+    <NavigationContainer >
+      <Drawer.Navigator > 
+        <Drawer.Screen  name='Home' component={Home} options={{headerTitle:()=> <Header title='Home' />}} />
+        <Drawer.Screen name='Cadastro' component={Cadastro} options={{headerTitle:()=> <Header title='Cadastro'/>, headerBackVisible:false }}  />
+        <Drawer.Screen name='Cadastro2' component={Cadastro2} options={{headerTitle:()=> <Header title='Cadastro'/>, headerBackVisible:false  }}  /> 
+        <Drawer.Screen name='Cadastro3' component={Cadastro3} options={{headerTitle:()=> <Header title='Cadastro'/>, headerBackVisible:false}}  />
+        <Drawer.Screen name='IMC' component={IMC} options={{headerTitle:()=> <Header title='IMC'/>}}  />
+        <Drawer.Screen name='Sobre' component={Sobre} />
+
+      </Drawer.Navigator>
+    </NavigationContainer>
+  );
+};
+

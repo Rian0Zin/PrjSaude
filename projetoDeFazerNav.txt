@@ -1,0 +1,31 @@
+import { StatusBar } from 'expo-status-bar';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Text, View, Image, StyleSheet, TouchableOpacity} from "react-native";
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Home from './src/pages/Home';
+import Sobre from './src/pages/Sobre';
+import Cadastro from './src/pages/Cadastro';
+import Cadastro2 from './src/pages/Cadastro/cadastro2';
+import Cadastro3 from './src/pages/Cadastro/cadastro3';
+import IMC from './src/pages/IMC';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import { HeaderBackButton } from '@react-navigation/elements';
+const Stack = createNativeStackNavigator();
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name='Home' component={Home} options={{ headerBackImageSource: require('./assets/riscosNav.jpeg')}} />
+        <Stack.Screen name='Cadastro' component={Cadastro} options={{ headerBackImageSource: require('./assets/bars.png') }} />
+        <Stack.Screen name='Cadastro2' component={Cadastro2} options={{ headerLeft:()=>(<View><FontAwesome6 name="bars" size={30} color="green" /></View>) ,title:'Cadastro', headerTitleAlign:'center' ,headerRight: () => (<View> <AntDesign style={{borderRadius:50, borderColor:'green', borderWidth:3}} name="user" size={35} color="green" /> </View>), headerStyle: { backgroundColor: "white" }, headerTintColor: "black" }}/> 
+        <Stack.Screen name='Cadastro3' component={Cadastro3}options={{ headerLeft:()=>(<View><FontAwesome6 name="bars" size={30} color="green" /></View>) ,title:'Cadastro', headerTitleAlign:'center' ,headerRight: () => (<View> <AntDesign style={{borderRadius:50, borderColor:'green', borderWidth:3}} name="user" size={35} color="green" /> </View>), headerStyle: { backgroundColor: "white" }, headerTintColor: "black" }} />
+        <Stack.Screen name='IMC' component={IMC} options={{ headerLeft:()=>(<View><FontAwesome6 name="bars" size={30} color="green" /></View>) ,title:'IMC', headerTitleAlign:'center' ,headerRight: () => (<View> <AntDesign style={{borderRadius:50, borderColor:'green', borderWidth:3}} name="user" size={35} color="green" /> </View>), headerStyle: { backgroundColor: "white" }, headerTintColor: "black" }} />
+        <Stack.Screen name='Sobre' component={Sobre} options={{ headerLeft:()=>( <View><FontAwesome6 name="bars" size={30} color="green" /></View>) ,title:'Inicio', headerTitleAlign:'center' ,headerRight: () => (<View> <AntDesign style={{borderRadius:50, borderColor:'green', borderWidth:3}} name="user" size={35} color="green" /> </View>), headerStyle: { backgroundColor: "white" }, headerTintColor: "black" }} />
+
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
