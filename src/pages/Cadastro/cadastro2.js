@@ -13,7 +13,7 @@ export default function Cadastro2({ navigation }) {
 
     const [peso, setPeso] = useState('');
     const [altura, setAltura] = useState('');
-
+        
 
     const salvarDados = async () => {
 
@@ -31,18 +31,26 @@ export default function Cadastro2({ navigation }) {
             <View style={styles.baguisParado}>
                 <Text style={{ fontFamily: 'arial-bold', fontSize: 35 }}> Meio caminho andado! </Text>
                 <View style={styles.icones}>
-                <FontAwesome6 name="diamond" size={50} color="green" />
-                <MaterialCommunityIcons name="minus" size={50} color="#74FC7D" />
-                             <FontAwesome6 name="diamond" size={50} color="green" />
-                <MaterialCommunityIcons name="minus" size={50} color="#D9D9D9" />                  
-                <FontAwesome6 name="diamond" size={50} color="#D9D9D9" />   
-             </View>
+                    <FontAwesome6 name="diamond" size={50} color="green" />
+                    <MaterialCommunityIcons name="minus" size={50} color="#74FC7D" />
+                    <FontAwesome6 name="diamond" size={50} color="green" />
+                    <MaterialCommunityIcons name="minus" size={50} color="#D9D9D9" />
+                    <FontAwesome6 name="diamond" size={50} color="#D9D9D9" />
+                </View>
             </View>
             <View style={styles.containerInputsButton}>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', }}>Peso: </Text>
-                <TextInput value={peso} onChangeText={setPeso} style={{ borderRadius: 1, borderColor: 'black', borderWidth: 1, height: 35 }} />
+                <Text style={{ fontSize: 20, fontWeight: 'bold', }}>Sexo: </Text>
+                <Picker style={{ marginBottom: 5, backgroundColor: 'white', borderWidth: 1, borderColor: 'black', height: 55 }}>
+                    <Picker.Item label="Selecione uma opção..." value="" enabled={false} />
+                    <Picker.Item label="Masculino" value="Masculino" />
+                    <Picker.Item label="Feminino" value="Feminino" />
+                </Picker>               
+                <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Data de nascimento:</Text>
+                <TextInput  style={{ borderRadius: 1, borderColor: 'black', borderWidth: 1, height: 35 }} />
                 <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Altura:</Text>
-                <TextInput value={altura} onChangeText={setAltura} style={{ borderRadius: 1, borderColor: 'black', borderWidth: 1, height: 35 }} />
+                <TextInput value={altura} onChangeText={setAltura} style={{ borderRadius: 1, borderColor: 'black', borderWidth: 1, height: 35 }} />                
+                <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Peso:</Text>
+                <TextInput value={peso} onChangeText={setPeso} style={{ borderRadius: 1, borderColor: 'black', borderWidth: 1, height: 35 }} />
                 <Button title="PROXIMO" color="green" onPress={salvarDados} size={1000} />
                 <Text style={{ color: '#615D5D' }}>Ao avançar, você concorda com os termos de conduta da nossa empresa.</Text>
 

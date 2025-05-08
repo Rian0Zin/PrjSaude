@@ -16,6 +16,7 @@ import DigitarDadosImc from '../pages/IMC/digitarDadosImc';
 import BeberAgua from '../pages/BeberAgua/BeberAgua';
 import Vacinas from '../pages/Vacinas';
 import Teste from '../pages/Diabetes';
+import Login from '../pages/Login';
 const Drawer = createDrawerNavigator();
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
       <Drawer.Navigator screenOptions={{headerLeft:()=> null, }} > 
        <Drawer.Screen  name='Home' component={Home} options={{header:()=> <Header title='Home' />}} />
         <Drawer.Screen name='Cadastro' component={Cadastro} options={{header:()=> <Header title='Cadastro'/>, drawerItemStyle: { display: 'none' },  }}  />
+        <Drawer.Screen name='Login' component={Login} options={{header:()=> <Header title='Login'/>, drawerItemStyle: { display: 'none' },  }}  />
         <Drawer.Screen name='Cadastro2' component={Cadastro2} options={{header:()=> <Header title='Cadastro'/>,  drawerItemStyle: { display: 'none' },  }}  /> 
         <Drawer.Screen name='Cadastro3' component={Cadastro3} options={{header:()=> <Header title='Cadastro'/>, drawerItemStyle: { display: 'none' }, }}  />
         <Drawer.Screen name='IMC' component={DigitarDadosImc} options={{header:()=> <Header title='IMC'/>}}  />

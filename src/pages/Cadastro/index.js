@@ -25,20 +25,15 @@ export default function Cadastro({ navigation }) {
             </View>
 
             <View style={styles.containerInputsButton}>
-                <Text style={{ fontSize: 20, fontWeight:'bold' }}>Nome: </Text>
+                <Text style={{ fontSize: 20, fontWeight:'bold' }}>Nome completo: </Text>
                 <TextInput style={{ borderColor: 'black', borderWidth: 1, height: 35 }} />
 
-                <Text style={{ fontSize: 20, fontWeight:'bold' }}>Data de Nascimento:</Text>
+                <Text style={{ fontSize: 20, fontWeight:'bold' }}>Email:</Text>
                 <TextInput  style={{ borderColor: 'black', borderWidth: 1, height: 35 }} />
 
-                <Text style={{ fontSize: 20, fontWeight:'bold' }}>Gênero: </Text>
-                <Picker
-                    style={{ marginBottom: 5, backgroundColor: 'white', borderWidth: 1, borderColor: 'black', height: 55 }}
-                >
-                    <Picker.Item label="Selecione uma opção..." value="" enabled={false} />
-                    <Picker.Item label="Masculino" value="Masculino" />
-                    <Picker.Item label="Feminino" value="Feminino" />
-                </Picker>
+                <Text style={{ fontSize: 20, fontWeight:'bold' }}>Senha: </Text>
+                <TextInput  style={{ borderColor: 'black', borderWidth: 1, height: 35 }} />
+
 
                 <Button
                     title="PRÓXIMO"
