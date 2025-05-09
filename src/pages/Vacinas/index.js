@@ -8,8 +8,8 @@ export default function Vacinas() {
     const [faixaEtaria, setFaixaEtaria] = useState('criança');
     const options = [
         { label: "Criança", value: "criança", activeColor: 'green', imageIcon: require('../../../assets/criancinha.png') },
-        { label: "Adulto", value: "adulto", activeColor: 'blue', imageIcon: require('../../../assets/adulto.png') },
-        { label: "Idoso", value: "idoso", activeColor: '#CD1C1CC9', imageIcon: require('../../../assets/idoso.png') }
+        { label: "Adulto", value: "adulto", activeColor: 'green', imageIcon: require('../../../assets/adulto.png') },
+        { label: "Idoso", value: "idoso", activeColor: 'green', imageIcon: require('../../../assets/idoso.png') }
     ];
     
     const animatedCrianca = useRef(new Animated.Value(0)).current; // Inicialmente invisível
