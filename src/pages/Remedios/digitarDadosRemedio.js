@@ -139,7 +139,7 @@ export default function DigitarDadosRemedio({ navigation }) {
                     <View style={{ width: '49%' }}>
                         <Text style={styles.inputLabel}>Frequência</Text>
                         <View style={[styles.rowInputs, { alignItems: 'center' }, styles.input]}>
-                            <MaterialCommunityIcons style={{width:'25%'}} name='timer-settings-outline' size={30} color={'green'}/>
+                            <MaterialCommunityIcons style={{width:'25%'}} name='timer-settings-outline' size={30}/>
                             <TextInput style={{width:'75%', outlineStyle: 'none',}} placeholder="Ex: 3x ao dia" />
                         </View>
                         

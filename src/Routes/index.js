@@ -36,8 +36,8 @@ export default function App() {
         <Drawer.Screen name='Frutas' component={Frutas} options={{header:()=> <Header title='Calorias'/>}}/>
         <Drawer.Screen name='Água' component={BeberAgua} options={{header:()=> <Header title='Beber Água'/>}}/>
         <Drawer.Screen name='Vacinas' component={Vacinas} options={{header:()=> <Header title='Vacinação'/>}}/>
-        <Drawer.Screen name='Remedio' component={DigitarDadosRemedio} options={{header:()=> <Header title='Medicamentos'/>}}/>
-        <Drawer.Screen name='Remedios Salvos' component={Remedio} options={{header:()=> <Header title='Medicamentos'/>}}/>
+        <Drawer.Screen name='Remedio' component={DigitarDadosRemedio} options={{header:()=> <Header title='Medicamentos'/>,  drawerItemStyle:{display:'none'}}}/>
+        <Drawer.Screen name='Lembretes de remedio' component={Remedio} options={{header:()=> <Header title='Medicamentos'/>,}}/>
         <Drawer.Screen name='Teste' component={Teste} options={{header:()=> <Header title='DiabeteTeste'/>}}/>
 
       </Drawer.Navigator>

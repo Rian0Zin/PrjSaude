@@ -62,7 +62,7 @@ export default function Frutas({ navigation }) {
       </View>
 
       {modalVisible && (
-        <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" color="green" style={{ marginTop: 20 }} />
       )}
 
       <View style={styles.containerConteudo}>
