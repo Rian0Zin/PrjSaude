@@ -67,6 +67,20 @@ export default function Home({navigation}) {
           </View>
         </View>
         </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('Lembretes de remedio')}>
+        <View style={styles.card}>
+          <Image
+            style={styles.cardImg}
+            source={{ uri: "https://cdn3.iconfinder.com/data/icons/healthcare-37/64/reminder-pills-512.png" }}
+          />
+          <View style={styles.cardTexto}>
+            <Text>Lembrete de remédio</Text>
+            
+          </View>
+        </View>
+        </TouchableOpacity>
+
       </ScrollView>
       </View>
       <StatusBar style="auto" />

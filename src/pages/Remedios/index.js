@@ -17,6 +17,12 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 
 export default function Remedio({ navigation }) {
     const [modalVisible, setModalVisible] = useState(false);
+
+    const horariosIcones = {
+        'Após almoço': 'weather-sunny',
+        'Após jantar': 'weather-night',
+    };
+
     const [remedios, setRemedios] = useState([
         {
             id: '1',
@@ -77,27 +83,27 @@ export default function Remedio({ navigation }) {
     const [remedioSelecionado, setRemedioSelecionado] = useState(null);
 
     const HandleEditar = () => {
+        if (!remedioSelecionado) return;
         setModalVisible(false);
-        Alert.alert("Editar", `Editar: ${remedioSelecionado?.nome}`);
+        Alert.alert("Editar", `Editar: ${remedioSelecionado.nome}`);
     };
 
     const handleExcluir = () => {
+        if (!remedioSelecionado) return;
         setModalVisible(false);
-        setRemedios(remedios.filter(r => r.id !== remedioSelecionado?.id));
-        Alert.alert("Excluído", `Remédio "${remedioSelecionado?.nome}" excluído.`);
+        // Exclui o remédio selecionado com base no ID
+        const novosRemedios = remedios.filter(r => r.id !== remedioSelecionado.id);
+        setRemedios(novosRemedios);
+        Alert.alert("Excluído", `Remédio "${remedioSelecionado.nome}" excluído.`);
     };
 
     const abrirMenu = (remedio) => {
-        setRemedioSelecionado(remedio);
-        setModalVisible(true);
+        setRemedioSelecionado(remedio);  // Atualiza o remédio selecionado
+        setModalVisible(true);           // Exibe o modal
     };
 
     const renderItem = ({ item }) => (
         <View style={styles.card}>
-            <TouchableOpacity style={styles.botaoMenu} onPress={() => abrirMenu(item)}>
-                <MaterialCommunityIcons name="dots-horizontal" size={24} color="#333" />
-            </TouchableOpacity>
-
             <View style={styles.imagemCard}>
                 <Image style={styles.image} source={{ uri: item.imagem }} />
             </View>
@@ -107,12 +113,26 @@ export default function Remedio({ navigation }) {
                     <Text style={styles.nomeRemedio} numberOfLines={1}>{item.nome}</Text>
                     <Text style={styles.textoDose}>{item.dose}</Text>
                 </View>
+                <View style={styles.topRow}>
+                    <TouchableOpacity onPress={() => abrirMenu(item)} style={styles.menuButton}>
+                        <MaterialCommunityIcons name="dots-horizontal" size={20} color="green" />
+                    </TouchableOpacity>
+                    <Fontisto name="pills" size={15} style={styles.iconePills} color={'white'} />
+                </View>
 
-                <View style={styles.horariosContainer}>
+                <View style={styles.horariosWrapper}>
                     {item.horarios.length > 0 ? (
-                        <Text style={styles.textoPredefinido}>
-                            {item.horarios.join(' | ')}
-                        </Text>
+                        item.horarios.map((horario, index) => (
+                            <View key={index} style={styles.horarioItem}>
+                                <MaterialCommunityIcons
+                                    name={horariosIcones[horario] || 'clock-outline'}
+                                    size={16}
+                                    color="green"
+                                    style={{ marginRight: 4 }}
+                                />
+                                <Text style={styles.textoPredefinido}>{horario}</Text>
+                            </View>
+                        ))
                     ) : (
                         <Text style={[styles.textoPredefinido, { fontStyle: 'italic', color: '#aaa' }]}>
                             Sem horários definidos
@@ -120,16 +140,12 @@ export default function Remedio({ navigation }) {
                     )}
                 </View>
 
-                <View style={styles.iconePillsWrapper}>
-                    <Fontisto name="pills" size={15} style={styles.iconePills} />
-                </View>
-
                 <View style={styles.duracaoContainer}>
-                    <MaterialCommunityIcons name="timelapse" size={20} color={'green'} />
+                    <MaterialCommunityIcons name="chart-line-variant" size={20} color={'green'} />
                     <Text style={styles.textoDuracao}>Duração: {item.duracao}</Text>
                 </View>
                 <View style={styles.duracaoContainer}>
-                    <MaterialCommunityIcons name="timelapse" size={20} color={'green'} />
+                    <MaterialCommunityIcons name="clock-alert-outline" size={20} color={'green'} />
                     <Text style={styles.textoDuracao}>Frequência: {item.frequencia}</Text>
                 </View>
             </View>
@@ -238,11 +254,10 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.4,
         shadowRadius: 3,
         marginBottom: 20,
-        position: 'relative',
     },
     imagemCard: {
         width: '40%',
-        height: 120,
+        height: '100%',
         borderRadius: 10,
         overflow: 'hidden',
         marginRight: 10,
@@ -255,6 +270,19 @@ const styles = StyleSheet.create({
     textoCard: {
         flex: 1,
         justifyContent: 'space-between',
+    },
+    topRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    menuButton: {
+        padding: 5,
+    },
+    iconePills: {
+        backgroundColor: 'green',
+        borderRadius: 5,
+        padding: 5,
     },
     linhaInfo: {
         flexDirection: 'row',
@@ -270,23 +298,21 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
     },
-    horariosContainer: {
-        marginBottom: 5,
+    horariosWrapper: {
+        flexDirection: 'row',
         flexWrap: 'wrap',
+        alignItems: 'center',
+        marginBottom: 5,
+    },
+    horarioItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 10,
+        marginBottom: 4,
     },
     textoPredefinido: {
         fontSize: 14,
         color: '#333',
-        marginHorizontal: 2,
-    },
-    iconePillsWrapper: {
-        alignItems: 'flex-start',
-        marginBottom: 5,
-    },
-    iconePills: {
-        backgroundColor: '#ddd',
-        borderRadius: 5,
-        padding: 5,
     },
     duracaoContainer: {
         flexDirection: 'row',
@@ -297,13 +323,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginLeft: 5,
         color: '#333',
-    },
-    botaoMenu: {
-        position: 'absolute',
-        top: 50,
-        right: 130,
-        zIndex: 1,
-        padding: 5,
     },
     modalOverlay: {
         flex: 1,

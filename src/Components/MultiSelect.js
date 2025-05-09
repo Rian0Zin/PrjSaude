@@ -5,21 +5,24 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const data = [
-  { label: 'Após o almoço', value: '1' },
-  { label: 'Após a janta', value: '2' },
+  { label: 'Após o almoço', value: '1', icon: 'weather-sunny' },
+  { label: 'Após a janta', value: '2', icon: 'weather-night' },
 ];
 
 const MultiSelectComponent = () => {
-  const [selected, setSelected] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
 
-  const renderItem = item => {
-    return (
-      <View style={styles.item}>
-        <Text style={styles.selectedTextStyle}>{item.label}</Text>
-        <MaterialCommunityIcons style={styles.icon} color="black" name="clock-time-five-outline" size={20} />
-      </View>
-    );
-  };
+  const renderItem = item => (
+    <View style={styles.item}>
+      <Text style={styles.selectedTextStyle}>{item.label}</Text>
+      <MaterialCommunityIcons
+        style={styles.icon}
+        color="green"
+        name={item.icon}
+        size={20}
+      />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -33,26 +36,41 @@ const MultiSelectComponent = () => {
         labelField="label"
         valueField="value"
         placeholder="Horários Pré-Definidos"
-        value={selected}
+        value={selectedItems.map(item => item.value)}
         search
         searchPlaceholder="Search..."
-        onChange={item => {
-          setSelected(item);
+        onChange={items => {
+          const selectedFullItems = data.filter(d =>
+            items.includes(d.value)
+          );
+          setSelectedItems(selectedFullItems);
         }}
-        renderLeftIcon={() => (
-          <MaterialCommunityIcons
-            style={styles.icon}
-            color="black"
-            name="clock-time-nine-outline"
-            size={20}
-          />
-        )}
+        renderLeftIcon={() => {
+          const iconName =
+            selectedItems.length > 0
+              ? selectedItems[0].icon
+              : 'clock-time-nine-outline';
+          return (
+            <MaterialCommunityIcons
+              style={styles.icon}
+              color={"green"}
+              name={iconName}
+              size={20}
+            />
+          );
+        }}
         renderItem={renderItem}
         renderSelectedItem={(item, unSelect) => (
           <TouchableOpacity onPress={() => unSelect && unSelect(item)}>
             <View style={styles.selectedStyle}>
               <Text style={styles.textSelectedStyle}>{item.label}</Text>
-              <AntDesign color="black" name="delete" size={17} />
+              <MaterialCommunityIcons
+                style={styles.icon}
+                color={"green"}
+                name={item.icon}
+                size={20}
+              />
+              <AntDesign color={"green"} name="delete" size={17} />
             </View>
           </TouchableOpacity>
         )}
@@ -64,12 +82,14 @@ const MultiSelectComponent = () => {
 export default MultiSelectComponent;
 
 const styles = StyleSheet.create({
-  container:{width:'100%'},
+  container: { width: '100%' },
   dropdown: {
     height: 50,
-    backgroundColor:'#ddd',
-    justifyContent:'space-around',
+    backgroundColor: '#fff',
+    justifyContent: 'space-around',
     elevation: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 15,
   },
   placeholderStyle: {
     fontSize: 16,
@@ -99,7 +119,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 14,
-    backgroundColor: '#ddd',
+    backgroundColor: '#fff',
     shadowColor: '#000',
     marginTop: 8,
     marginRight: 12,
@@ -110,10 +130,5 @@ const styles = StyleSheet.create({
   textSelectedStyle: {
     marginRight: 5,
     fontSize: 16,
-  },
-  dropdown:{
-    paddingHorizontal:7,
-    backgroundColor:'#ddd',
-    paddingVertical:15
   },
 });

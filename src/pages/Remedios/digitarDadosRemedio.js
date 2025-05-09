@@ -7,6 +7,8 @@ import {
     TextInput,
     Pressable,
     ScrollView,
+    TouchableOpacity,
+    Alert,
 } from 'react-native';
 import React, { useState } from 'react';
 import DropdownComponent from '../../Components/Dropdown';
@@ -14,11 +16,15 @@ import MultiSelect from '../../Components/MultiSelect';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import axios from 'axios';
 
 export default function DigitarDadosRemedio({ navigation }) {
     const [imageUri, setImageUri] = useState(null);
     const [quantidade, setQuantidade] = useState('1');
     const [tipoSelecionado, setTipoSelecionado] = useState(null);
+    const [duracaoRaw, setDuracaoRaw] = useState('');
+    const [frequenciaRaw, setFrequenciaRaw] = useState('');
+    const [nomeMedicamento, setNomeMedicamento] = useState('');
 
     const handleChooseImage = () => {
         launchImageLibrary(
@@ -50,6 +56,79 @@ export default function DigitarDadosRemedio({ navigation }) {
         }
     };
 
+    const formatarDuracao = (dias) => {
+        const numDias = parseInt(dias);
+        if (isNaN(numDias)) return '';
+
+        if (numDias < 365) return `${numDias} dias`;
+
+        const anos = Math.floor(numDias / 365);
+        const resto = numDias % 365;
+        if (resto === 0) return `${anos} ano${anos > 1 ? 's' : ''}`;
+        if (resto < 30) return `${anos} ano${anos > 1 ? 's' : ''} e ${resto} dia${resto > 1 ? 's' : ''}`;
+
+        const meses = Math.floor(resto / 30);
+        return `${anos} ano${anos > 1 ? 's' : ''} e ${meses} mês${meses > 1 ? 'es' : ''}`;
+    };
+
+    const enviarParaAPI = async () => {
+        if (!nomeMedicamento.trim()) {
+            Alert.alert('Erro', 'Preencha o nome do medicamento.');
+            return;
+        }
+
+        if (!quantidade || parseInt(quantidade) <= 0) {
+            Alert.alert('Erro', 'A quantidade deve ser maior que zero.');
+            return;
+        }
+
+        if (!tipoSelecionado) {
+            Alert.alert('Erro', 'Selecione o tipo de medicação.');
+            return;
+        }
+
+        if (!duracaoRaw || parseInt(duracaoRaw) <= 0) {
+            Alert.alert('Erro', 'Informe a duração do tratamento.');
+            return;
+        }
+
+        if (!frequenciaRaw || parseInt(frequenciaRaw) <= 0) {
+            Alert.alert('Erro', 'Informe a frequência da medicação.');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+
+            if (imageUri) {
+                formData.append('imagem', {
+                    uri: imageUri,
+                    name: 'remedio.jpg',
+                    type: 'image/jpeg',
+                });
+            }
+
+            formData.append('nome', nomeMedicamento);
+            formData.append('quantidade', quantidade);
+            formData.append('tipo', tipoSelecionado);
+            formData.append('duracao', duracaoRaw);
+            formData.append('frequencia', frequenciaRaw);
+
+            const response = await axios.post('https://suaapi.com/remedios', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            Alert.alert('Sucesso', 'Medicamento cadastrado com sucesso!');
+            navigation.goBack();
+
+        } catch (error) {
+            console.error('Erro ao enviar:', error);
+            Alert.alert('Erro', 'Falha ao enviar os dados.');
+        }
+    };
+
     const tiposMedicacao = [
         { id: 'Pilula', icon: 'pills' },
         { id: 'Comprimido', icon: 'drug-pack' },
@@ -60,9 +139,7 @@ export default function DigitarDadosRemedio({ navigation }) {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.cardImg}>
-                <Text style={[styles.inputLabel, { textAlign: 'center' }]}>
-                    Foto do medicamento
-                </Text>
+                <Text style={[styles.inputLabel, { textAlign: 'center' }]}>Foto do medicamento</Text>
                 <Pressable onPress={handleChooseImage} style={styles.cardAdcImg}>
                     <Image
                         source={
@@ -77,10 +154,10 @@ export default function DigitarDadosRemedio({ navigation }) {
 
             <View style={{ width: '100%' }}>
                 <Text style={styles.inputLabel}>Nome do medicamento</Text>
-                <TextInput style={styles.input} />
+                <TextInput style={styles.input} value={nomeMedicamento} onChangeText={setNomeMedicamento} />
             </View>
 
-            <View style={{ width: '100%'}}>
+            <View style={{ width: '100%' }}>
                 <Text style={styles.inputLabel}>Quantidade do medicamento</Text>
                 <View style={[styles.rowInputs, { alignItems: 'center' }]}>
                     <Pressable onPress={decrementar} style={styles.btnQtd}>
@@ -92,7 +169,7 @@ export default function DigitarDadosRemedio({ navigation }) {
                         value={quantidade}
                         onChangeText={(text) => {
                             const cleaned = text.replace(/[^0-9]/g, '');
-                            setQuantidade(cleaned === '' ? '1' : cleaned);
+                            setQuantidade(cleaned === '' ? '0' : cleaned);
                         }}
                         keyboardType="numeric"
                     />
@@ -101,7 +178,7 @@ export default function DigitarDadosRemedio({ navigation }) {
                         <Text style={styles.btnQtdText}>+</Text>
                     </Pressable>
 
-                    <DropdownComponent/>
+                    <DropdownComponent />
                 </View>
             </View>
 
@@ -111,13 +188,10 @@ export default function DigitarDadosRemedio({ navigation }) {
                     {tiposMedicacao.map((item) => (
                         <Pressable
                             key={item.id}
-                            style={[
-                                styles.iconBox,
-                                tipoSelecionado === item.id && styles.iconBoxSelecionado,
-                            ]}
+                            style={[styles.iconBox, tipoSelecionado === item.id && styles.iconBoxSelecionado]}
                             onPress={() => setTipoSelecionado(item.id)}
                         >
-                            <Fontisto name={item.icon} size={30}/>
+                            <Fontisto name={item.icon} size={30} color={'green'} />
                         </Pressable>
                     ))}
                 </ScrollView>
@@ -127,29 +201,50 @@ export default function DigitarDadosRemedio({ navigation }) {
                 <MultiSelect style={styles.input} />
             </View>
 
-            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom:5}}>
+            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 5 }}>
                 <View style={[styles.rowInputs, { width: '100%' }]}>
                     <View style={{ width: '49%' }}>
                         <Text style={styles.inputLabel}>Duração</Text>
                         <View style={[styles.rowInputs, { alignItems: 'center' }, styles.input]}>
-                            <MaterialCommunityIcons style={{width:'25%'}} name='timelapse' size={30} color={'green'}/>
-                            <TextInput style={{width:'75%', outlineStyle: 'none',}} placeholder="Ex: 7 dias" />
+                            <MaterialCommunityIcons style={{ width: '25%' }} name='chart-line-variant' size={30} color={'green'} />
+                            <TextInput
+                                style={{ width: '75%', outlineStyle: 'none' }}
+                                placeholder="Ex: 7 dias"
+                                value={duracaoRaw}
+                                onChangeText={(text) => {
+                                    const cleaned = text.replace(/[^0-9]/g, '');
+                                    setDuracaoRaw(cleaned.slice(0, 4));
+                                }}
+                                keyboardType="numeric"
+                            />
                         </View>
+                        {duracaoRaw ? (
+                            <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>{formatarDuracao(duracaoRaw)}</Text>
+                        ) : null}
                     </View>
+
                     <View style={{ width: '49%' }}>
                         <Text style={styles.inputLabel}>Frequência</Text>
                         <View style={[styles.rowInputs, { alignItems: 'center' }, styles.input]}>
-                            <MaterialCommunityIcons style={{width:'25%'}} name='timer-settings-outline' size={30}/>
-                            <TextInput style={{width:'75%', outlineStyle: 'none',}} placeholder="Ex: 3x ao dia" />
+                            <MaterialCommunityIcons style={{ width: '25%' }} name='clock-alert-outline' color={'green'} size={30} />
+                            <TextInput
+                                style={{ width: '75%', outlineStyle: 'none' }}
+                                placeholder="Ex: 1x por hora"
+                                value={frequenciaRaw}
+                                onChangeText={(text) => {
+                                    const cleaned = text.replace(/[^0-9]/g, '');
+                                    setFrequenciaRaw(cleaned.slice(0, 2));
+                                }}
+                                keyboardType="numeric"
+                            />
                         </View>
-                        
                     </View>
                 </View>
             </View>
 
-            <Pressable style={styles.btnEnviar}>
+            <TouchableOpacity style={styles.btnEnviar} onPress={enviarParaAPI}>
                 <Text style={styles.textoBtn}>Enviar</Text>
-            </Pressable>
+            </TouchableOpacity>
         </SafeAreaView>
     );
 }
@@ -161,6 +256,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-evenly',
         padding: 8,
         margin: 10,
+        backgroundColor: '#F5F5F5',
     },
     cardAdcImg: {
         width: 170,
@@ -169,9 +265,8 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor:'#ddd',
+        backgroundColor: '#fff',
         borderRadius: 10,
-        
     },
     previewImage: {
         width: '100%',
@@ -179,30 +274,28 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     input: {
-        outlineStyle: 'none',
-        padding: 5,
+        outlineStyle: 'none', padding: 5,
         paddingVertical: 12,
         borderRadius: 5,
-        backgroundColor: '#ddd',
+        backgroundColor: '#fff',
         width: '100%',
     },
     rowInputs: {
-        flexDirection: 'row',
+        outlineStyle: 'none', flexDirection: 'row',
         gap: 5,
         marginTop: 8,
     },
     btnQtd: {
-        backgroundColor: '#ddd',
+        backgroundColor: '#fff',
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 5,
     },
     btnQtdText: {
-        outlineStyle: 'none',
         fontSize: 20,
     },
     inputQtd: {
-        textAlign: 'center',
+        outlineStyle: 'none', textAlign: 'center',
         width: '100%',
         marginHorizontal: 10,
     },
@@ -217,9 +310,10 @@ const styles = StyleSheet.create({
     textoBtn: {
         fontSize: 20,
         color: 'white',
-        fontweight: '800',
+        fontWeight: '800',
     },
     inputLabel: {
+        outlineStyle: 'none',
         textAlign: 'left',
         width: '100%',
         justifyContent: 'flex-end',
@@ -242,13 +336,13 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 10,
-        backgroundColor: '#ddd',
+        backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 10,
     },
     iconBoxSelecionado: {
-        borderWidth:1,
-        borderColor:'green',
+        borderWidth: 1,
+        borderColor: 'green',
     },
 });
