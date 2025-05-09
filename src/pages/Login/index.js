@@ -9,7 +9,16 @@ import { useState } from "react";
 import axios from 'axios';
 
 export default function Login({ navigation }) {
-   
+    async function fotoPerfil() {
+        let result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+        });
+        if (!result.canceled) {
+          setUserImg(result.assets[0].uri);
+        }
+      }
 
     return (
         <View style={styles.container}>
