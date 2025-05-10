@@ -146,9 +146,12 @@ export default function DigitarDadosRemedio({ navigation }) {
     remedio.append('uniMedidaRemedio', uniMedidaRemedio);
     remedio.append('duracaoRemedio', duracaoRemedio);
     remedio.append('frequenciaRemedio', frequenciaRemedio);
-    const selectedValues = selectedTimes.map(item => item.value);
+    const selectedValues = selectedTimes.map(item => {
+    const value = parseInt(item.value, 10);
+        console.log(`Original: ${item.value}, Convertido: ${value}`);
+        return value;
+    });
     remedio.append('horarioPredefinidoRemedio', JSON.stringify(selectedValues));
-
 
     try {
         const response = await api.post('/remedio', remedio, {
