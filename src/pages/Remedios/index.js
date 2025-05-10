@@ -85,20 +85,38 @@ export default function Remedio({ navigation }) {
     };
 
     const handleEditar = () => {
-        if (!remedioSelecionado) return;
-        setModalVisible(false);
-        Alert.alert("Editar", `Editar: ${remedioSelecionado.nomeRemedio}`);
-    };
+    if (!remedioSelecionado) return;
+    setModalVisible(false);
+    navigation.navigate('Remedio', { 
+        remedioParaEditar: remedioSelecionado 
+    });
+};
 
-    const handleExcluir = () => {
-        if (!remedioSelecionado) return;
-        setModalVisible(false);
-        const novosRemedios = remedios.filter(r => r.id !== remedioSelecionado.id);
+    const handleExcluir = async () => {
+    console.log('Remédio selecionado:', remedioSelecionado); // Debug
+    if (!remedioSelecionado?.idRemedio) {
+        Alert.alert("Erro", "Selecione um remédio válido.");
+        return;
+    }
+
+    try {
+        console.log("Enviando requisição DELETE para:", `http://127.0.0.1:8081/api/remedio/${remedioSelecionado.idRemedio}`);
+        await axios.delete(`http://127.0.0.1:8081/api/remedio/${remedioSelecionado.idRemedio}`);
+        
+        const novosRemedios = remedios.filter(r => r.idRemedio !== remedioSelecionado.idRemedio);
         setRemedios(novosRemedios);
-        Alert.alert("Excluído", `Remédio "${remedioSelecionado.nomeRemedio}" excluído.`);
-    };
+        Alert.alert("Sucesso", `Remédio "${remedioSelecionado.nomeRemedio}" excluído.`);
+    } catch (error) {
+        console.error("Erro detalhado:", error.response?.data || error.message);
+        Alert.alert("Erro", error.response?.data?.mensagem || "Falha ao excluir.");
+    } finally {
+        setModalVisible(false);
+    }
+};
+
 
     const abrirMenu = (remedio) => {
+        console.log('Remédio selecionado:', remedio); // Debug
         setRemedioSelecionado(remedio);
         setModalVisible(true);
     };

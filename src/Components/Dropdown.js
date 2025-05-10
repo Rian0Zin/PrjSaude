@@ -9,8 +9,13 @@ const data = [
   { label: 'G', value: 'G' },
 ];
 
-const DropdownComponent = ({ onSelect }) => {
-  const [value, setValue] = useState(null);
+const DropdownComponent = ({ onSelect, selectedValue }) => {  // Adicione selectedValue nas props
+  const [value, setValue] = useState(selectedValue || null);  // Use o selectedValue como valor inicial
+
+  // Atualize o estado interno quando o selectedValue mudar
+  React.useEffect(() => {
+    setValue(selectedValue);
+  }, [selectedValue]);
 
   const renderItem = item => (
     <View style={styles.item}>
@@ -32,10 +37,10 @@ const DropdownComponent = ({ onSelect }) => {
       valueField="value"
       placeholder="G/MG"
       searchPlaceholder="Search..."
-      value={value}
+      value={value}  // Use o estado value que agora sincroniza com selectedValue
       onChange={item => {
         setValue(item.value);
-        onSelect(item.value); // ← Chama a função do componente pai
+        onSelect(item.value);
       }}
       renderItem={renderItem}
     />

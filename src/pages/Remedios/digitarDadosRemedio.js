@@ -10,7 +10,7 @@ import {
     TouchableOpacity,
     Alert,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import DropdownComponent from '../../Components/Dropdown';
 import MultiSelect from '../../Components/MultiSelect';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -26,7 +26,11 @@ const api = axios.create({
     },
 });
 
-export default function DigitarDadosRemedio({ navigation }) {
+export default function DigitarDadosRemedio({ route, navigation }) {
+
+    const { remedioParaEditar } = route.params || {};
+
+    // Resetar completamente os estados quando o parâmetro remedioParaEditar muda
     const [imageUri, setImageUri] = useState(null);
     const [quantidadeRemedio, setQuantidadeRemedio] = useState('1');
     const [tipoRemedio, setTipoRemedio] = useState(null);
@@ -35,6 +39,49 @@ export default function DigitarDadosRemedio({ navigation }) {
     const [nomeRemedio, setNomeRemedio] = useState('');
     const [uniMedidaRemedio, setUniMedidaRemedio] = useState(null);
     const [selectedTimes, setSelectedTimes] = useState([]);
+
+    // Efeito para carregar dados apenas quando for edição
+    useEffect(() => {
+        const { remedioParaEditar } = route.params || {};
+        
+        if (remedioParaEditar) {
+            setImageUri(remedioParaEditar.fotoRemedio 
+                ? `http://127.0.0.1:8081/img/fotoRemedio/${remedioParaEditar.fotoRemedio}`
+                : null);
+            setQuantidadeRemedio(remedioParaEditar.qntRemedio?.toString() || '1');
+            setTipoRemedio(remedioParaEditar.tipoRemedio || null);
+            setDuracaoRemedio(remedioParaEditar.duracaoRemedio?.toString() || '');
+            setFrequenciaRemedio(remedioParaEditar.frequenciaRemedio?.toString() || '');
+            setNomeRemedio(remedioParaEditar.nomeRemedio || '');
+            setUniMedidaRemedio(remedioParaEditar.uniMedidaRemedio || null);
+            
+            try {
+                const horarios = remedioParaEditar.horarioPredefinidoRemedio
+                    ? Array.isArray(remedioParaEditar.horarioPredefinidoRemedio)
+                        ? remedioParaEditar.horarioPredefinidoRemedio
+                        : JSON.parse(remedioParaEditar.horarioPredefinidoRemedio || '[]')
+                    : [];
+                setSelectedTimes(horarios.map(item => ({ value: item.toString() })));
+            } catch (error) {
+                console.error('Erro ao parsear horários:', error);
+                setSelectedTimes([]);
+            }
+        } else {
+            // Resetar todos os estados para valores padrão
+            setImageUri(null);
+            setQuantidadeRemedio('1');
+            setTipoRemedio(null);
+            setDuracaoRemedio('');
+            setFrequenciaRemedio('');
+            setNomeRemedio('');
+            setUniMedidaRemedio(null);
+            setSelectedTimes([]);
+        }
+        
+        navigation.setOptions({
+            title: remedioParaEditar ? 'Editar Remédio' : 'Adicionar Remédio'
+        });
+    }, [route.params?.remedioParaEditar]);
 
     const handleChooseImage = () => {
         launchImageLibrary(
@@ -66,72 +113,52 @@ export default function DigitarDadosRemedio({ navigation }) {
         }
     };
 
-     const formatarDuracao = (dias) => {
+    const formatarDuracao = (dias) => {
         const numDias = parseInt(dias) || 0;
-        
+
         if (numDias === 0) return '0 dias';
         if (numDias < 30) return `${numDias} dia${numDias > 1 ? 's' : ''}`;
-        
+
         const meses = Math.floor(numDias / 30);
         const diasRestantes = numDias % 30;
-        
+
         if (meses < 12) {
-            return `${meses} mês${meses > 1 ? 'es' : ''}` + 
-                   (diasRestantes > 0 ? ` e ${diasRestantes} dia${diasRestantes > 1 ? 's' : ''}` : '');
+            return `${meses} mês${meses > 1 ? 'es' : ''}` +
+                (diasRestantes > 0 ? ` e ${diasRestantes} dia${diasRestantes > 1 ? 's' : ''}` : '');
         }
-        
+
         const anos = Math.floor(meses / 12);
         const mesesRestantes = meses % 12;
-        
-        return `${anos} ano${anos > 1 ? 's' : ''}` + 
-               (mesesRestantes > 0 ? ` e ${mesesRestantes} mês${mesesRestantes > 1 ? 'es' : ''}` : '');
+
+        return `${anos} ano${anos > 1 ? 's' : ''}` +
+            (mesesRestantes > 0 ? ` e ${mesesRestantes} mês${mesesRestantes > 1 ? 'es' : ''}` : '');
     };
 
     // Função para formatar frequência (horas para dias)
     const formatarFrequencia = (horas) => {
         const numHoras = parseInt(horas) || 0;
-        
+
         if (numHoras === 0) return '0 horas';
         if (numHoras < 24) return `${numHoras} hora${numHoras > 1 ? 's' : ''}`;
-        
+
         const dias = Math.floor(numHoras / 24);
         const horasRestantes = numHoras % 24;
-        
-        return `${dias} dia${dias > 1 ? 's' : ''}` + 
-               (horasRestantes > 0 ? ` e ${horasRestantes} hora${horasRestantes > 1 ? 's' : ''}` : '');
+
+        return `${dias} dia${dias > 1 ? 's' : ''}` +
+            (horasRestantes > 0 ? ` e ${horasRestantes} hora${horasRestantes > 1 ? 's' : ''}` : '');
     };
 
-    const enviarParaAPI = async () => {
+   const enviarParaAPI = async () => {
     if (!nomeRemedio.trim()) {
         Alert.alert('Erro', 'Preencha o nome do medicamento.');
         return;
     }
 
-    if (!quantidadeRemedio || parseInt(quantidadeRemedio) <= 0) {
-        Alert.alert('Erro', 'A quantidade deve ser maior que zero.');
-        return;
-    }
-
-    if (!tipoRemedio) {
-        Alert.alert('Erro', 'Selecione o tipo de medicação.');
-        return;
-    }
-
-    if (!duracaoRemedio || parseInt(duracaoRemedio) <= 0) {
-        Alert.alert('Erro', 'Informe a duração do tratamento.');
-        return;
-    }
-
-    if (!frequenciaRemedio || parseInt(frequenciaRemedio) <= 0) {
-        Alert.alert('Erro', 'Informe a frequência da medicação.');
-        return;
-    }
-
     const remedio = new FormData();
 
-    // Lógica para imagem
-    if (imageUri) {
-    try {
+    // Lógica para imagem - Corrigida
+    if (imageUri && !imageUri.includes('http://127.0.0.1:8081')) {
+        try {
         let file;
         if (imageUri.startsWith("data:image")) {
             // Se for uma imagem base64
@@ -160,45 +187,48 @@ export default function DigitarDadosRemedio({ navigation }) {
         Alert.alert('Erro', 'Falha ao processar a imagem.');
         return;
     }
-}
-    // Dados do medicamento
+    } else if (remedioParaEditar?.fotoRemedio) {
+        // Mantém a foto existente se não foi alterada
+        remedio.append('fotoRemedio', remedioParaEditar.fotoRemedio);
+    }
+
+    // Restante dos dados
     remedio.append('nomeRemedio', nomeRemedio);
     remedio.append('qntRemedio', quantidadeRemedio);
     remedio.append('tipoRemedio', tipoRemedio);
     remedio.append('uniMedidaRemedio', uniMedidaRemedio);
     remedio.append('duracaoRemedio', duracaoRemedio);
     remedio.append('frequenciaRemedio', frequenciaRemedio);
-    const selectedValues = selectedTimes.map(item => {
-    const value = parseInt(item.value, 10);
-        console.log(`Original: ${item.value}, Convertido: ${value}`);
-        return value;
-    });
+
+    const selectedValues = selectedTimes.map(item => parseInt(item.value, 10));
     remedio.append('horarioPredefinidoRemedio', JSON.stringify(selectedValues));
 
     try {
-        const response = await api.post('/remedio', remedio, {
+        let response;
+        const config = {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
-        });
+        };
 
-        Alert.alert('Sucesso', 'Medicamento cadastrado com sucesso!');
-        
-        // Limpar campos após envio bem-sucedido
-        setNomeRemedio('');
-        setQuantidadeRemedio('1');
-        setTipoRemedio(null);
-        setDuracaoRemedio('');
-        setFrequenciaRemedio('');
-        setUniMedidaRemedio('');
-        setSelectedTimes([]);
-        setImageUri(null);
+        if (remedioParaEditar) {
+            response = await api.put(`/remedio/${remedioParaEditar.idRemedio}`, remedio, config);
+            Alert.alert('Sucesso', 'Medicamento atualizado com sucesso!');
+        } else {
+            response = await api.post('/remedio', remedio, config);
+            Alert.alert('Sucesso', 'Medicamento cadastrado com sucesso!');
+        }
 
-        // Voltar para a tela anterior
+        // Limpar campos se for criação
+        if (!remedioParaEditar) {
+            // ... (código existente)
+        }
+
         navigation.navigate('Lembretes de remedio');
     } catch (error) {
-        console.error('Erro ao enviar:', error);
-        Alert.alert('Erro', 'Falha ao enviar os dados.');
+        console.error('Erro completo:', error);
+        console.error('Resposta de erro:', error.response?.data);
+        Alert.alert('Erro', error.response?.data?.message || 'Falha ao enviar os dados.');
     }
 };
 
@@ -247,7 +277,10 @@ export default function DigitarDadosRemedio({ navigation }) {
                         <Text style={styles.btnQtdText}>+</Text>
                     </Pressable>
 
-                    <DropdownComponent onSelect={(value) => setUniMedidaRemedio(value)}/>
+                    <DropdownComponent 
+                        onSelect={(value) => setUniMedidaRemedio(value)}
+                        selectedValue={uniMedidaRemedio}  // Passe o valor atual para o dropdown
+                    />
                 </View>
             </View>
 
@@ -267,7 +300,7 @@ export default function DigitarDadosRemedio({ navigation }) {
             </View>
 
             <View style={{ width: '100%' }}>
-                <MultiSelect style={styles.input} selectedItems={selectedTimes} setSelectedItems={setSelectedTimes}/>
+                <MultiSelect style={styles.input} selectedItems={selectedTimes} setSelectedItems={setSelectedTimes} />
             </View>
 
             <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 5 }}>
@@ -319,7 +352,9 @@ export default function DigitarDadosRemedio({ navigation }) {
             </View>
 
             <TouchableOpacity style={styles.btnEnviar} onPress={enviarParaAPI}>
-                <Text style={styles.textoBtn}>Enviar</Text>
+                <Text style={styles.textoBtn}>
+                    {remedioParaEditar ? 'Atualizar' : 'Enviar'}
+                </Text>
             </TouchableOpacity>
         </SafeAreaView>
     );
