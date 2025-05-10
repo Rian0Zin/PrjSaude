@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -11,146 +11,214 @@ import {
     Alert,
     FlatList
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import axios from 'axios';
 
 export default function Remedio({ navigation }) {
     const [modalVisible, setModalVisible] = useState(false);
-
-    const horariosIcones = {
-        'Após almoço': 'weather-sunny',
-        'Após jantar': 'weather-night',
-    };
-
-    const [remedios, setRemedios] = useState([
-        {
-            id: '1',
-            nome: 'Paracetamol',
-            dose: '500mg',
-            imagem: 'https://th.bing.com/th/id/OIP.JVwLCv_7lnaWflea6l7VbgAAAA?w=200&h=200&c=10&o=6&pid=genserp&rm=2',
-            horarios: ['Após almoço', 'Após jantar'],
-            duracao: '7 dias',
-            frequencia: '1x por hora'
-        },
-        {
-            id: '2',
-            nome: 'Ronaldo',
-            dose: '500mg',
-            imagem: 'https://th.bing.com/th/id/OIP.JVwLCv_7lnaWflea6l7VbgAAAA?w=200&h=200&c=10&o=6&pid=genserp&rm=2',
-            horarios: ['Após almoço', 'Após jantar'],
-            duracao: '7 dias',
-            frequencia: '1x por hora'
-        },
-        {
-            id: '3',
-            nome: 'chibatozil',
-            dose: '500mg',
-            imagem: 'https://th.bing.com/th/id/OIP.JVwLCv_7lnaWflea6l7VbgAAAA?w=200&h=200&c=10&o=6&pid=genserp&rm=2',
-            horarios: ['Após almoço', 'Após jantar'],
-            duracao: '7 dias',
-            frequencia: '1x por hora'
-        },
-        {
-            id: '6',
-            nome: 'Paracetamol',
-            dose: '500mg',
-            imagem: 'https://th.bing.com/th/id/OIP.JVwLCv_7lnaWflea6l7VbgAAAA?w=200&h=200&c=10&o=6&pid=genserp&rm=2',
-            horarios: ['Após almoço', 'Após jantar'],
-            duracao: '7 dias',
-            frequencia: '1x por hora'
-        },
-        {
-            id: '4',
-            nome: 'Paracetamol',
-            dose: '500mg',
-            imagem: 'https://th.bing.com/th/id/OIP.JVwLCv_7lnaWflea6l7VbgAAAA?w=200&h=200&c=10&o=6&pid=genserp&rm=2',
-            horarios: ['Após almoço', 'Após jantar'],
-            duracao: '7 dias',
-            frequencia: '1x por hora'
-        },
-        {
-            id: '5',
-            nome: 'Paracetamol',
-            dose: '500mg',
-            imagem: 'https://th.bing.com/th/id/OIP.JVwLCv_7lnaWflea6l7VbgAAAA?w=200&h=200&c=10&o=6&pid=genserp&rm=2',
-            horarios: ['Após almoço', 'Após jantar'],
-            duracao: '7 dias',
-            frequencia: '1x por hora'
-        },
-    ]);
-
+    const [remedios, setRemedios] = useState([]);
     const [remedioSelecionado, setRemedioSelecionado] = useState(null);
 
-    const HandleEditar = () => {
+    const parseHorarios = (horarios) => {
+        if (Array.isArray(horarios)) return horarios;
+        if (typeof horarios === 'string') {
+            try {
+                const parsed = JSON.parse(horarios);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
+        }
+        return [];
+    };
+
+    const fetchRemedios = async () => {
+        try {
+            const response = await axios.get('http://127.0.0.1:8081/api/remedio');
+
+            if (response.status === 200) {
+                const remediosFormatados = response.data.map(remedio => ({
+                    ...remedio,
+                    horarioPredefinidoRemedio: parseHorarios(remedio.horarioPredefinidoRemedio)
+                }));
+                setRemedios(remediosFormatados);
+            } else {
+                console.error('Erro na API:', response.status, response.statusText);
+                Alert.alert('Erro', 'Não foi possível carregar os remédios');
+            }
+        } catch (error) {
+            console.error('Erro ao buscar os remédios:', error);
+            Alert.alert('Erro', 'Falha na conexão com o servidor');
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchRemedios();
+
+            return () => {
+                console.log('Saindo da tela de Remédios');
+            };
+        }, [])
+    );
+
+    const tipoRemedioIcones = {
+        'Pilula': 'pills',
+        'Comprimido': 'drug-pack',
+        'Xarope': 'test-bottle',
+        'Injeção': 'injection-syringe',
+        'default': 'pills'
+    };
+
+    const horariosMapeados = {
+        1: {
+            texto: 'Após almoço',
+            icone: 'weather-sunny'
+        },
+        2: {
+            texto: 'Após jantar',
+            icone: 'weather-night'
+        }
+    };
+
+    const handleEditar = () => {
         if (!remedioSelecionado) return;
         setModalVisible(false);
-        Alert.alert("Editar", `Editar: ${remedioSelecionado.nome}`);
+        Alert.alert("Editar", `Editar: ${remedioSelecionado.nomeRemedio}`);
     };
 
     const handleExcluir = () => {
         if (!remedioSelecionado) return;
         setModalVisible(false);
-        // Exclui o remédio selecionado com base no ID
         const novosRemedios = remedios.filter(r => r.id !== remedioSelecionado.id);
         setRemedios(novosRemedios);
-        Alert.alert("Excluído", `Remédio "${remedioSelecionado.nome}" excluído.`);
+        Alert.alert("Excluído", `Remédio "${remedioSelecionado.nomeRemedio}" excluído.`);
     };
 
     const abrirMenu = (remedio) => {
-        setRemedioSelecionado(remedio);  // Atualiza o remédio selecionado
-        setModalVisible(true);           // Exibe o modal
+        setRemedioSelecionado(remedio);
+        setModalVisible(true);
     };
 
-    const renderItem = ({ item }) => (
-        <View style={styles.card}>
-            <View style={styles.imagemCard}>
-                <Image style={styles.image} source={{ uri: item.imagem }} />
-            </View>
+    const formatarDuracao = (dias) => {
+        const numDias = parseInt(dias) || 0;
 
-            <View style={styles.textoCard}>
-                <View style={styles.linhaInfo}>
-                    <Text style={styles.nomeRemedio} numberOfLines={1}>{item.nome}</Text>
-                    <Text style={styles.textoDose}>{item.dose}</Text>
-                </View>
-                <View style={styles.topRow}>
-                    <TouchableOpacity onPress={() => abrirMenu(item)} style={styles.menuButton}>
-                        <MaterialCommunityIcons name="dots-horizontal" size={20} color="green" />
-                    </TouchableOpacity>
-                    <Fontisto name="pills" size={15} style={styles.iconePills} color={'white'} />
+        if (numDias === 0) return '0 dias';
+        if (numDias < 30) return `${numDias} dia${numDias > 1 ? 's' : ''}`;
+
+        const meses = Math.floor(numDias / 30);
+        const diasRestantes = numDias % 30;
+
+        if (meses < 12) {
+            return `${meses} mês${meses > 1 ? 'es' : ''}` +
+                (diasRestantes > 0 ? ` e ${diasRestantes} dia${diasRestantes > 1 ? 's' : ''}` : '');
+        }
+
+        const anos = Math.floor(meses / 12);
+        const mesesRestantes = meses % 12;
+
+        return `${anos} ano${anos > 1 ? 's' : ''}` +
+            (mesesRestantes > 0 ? ` e ${mesesRestantes} mês${mesesRestantes > 1 ? 'es' : ''}` : '');
+    };
+
+    // Função para formatar frequência (horas para dias)
+    const formatarFrequencia = (horas) => {
+        const numHoras = parseInt(horas) || 0;
+
+        if (numHoras === 0) return '0 horas';
+        if (numHoras < 24) return `${numHoras} hora${numHoras > 1 ? 's' : ''}`;
+
+        const dias = Math.floor(numHoras / 24);
+        const horasRestantes = numHoras % 24;
+
+        return `${dias} dia${dias > 1 ? 's' : ''}` +
+            (horasRestantes > 0 ? ` e ${horasRestantes} hora${horasRestantes > 1 ? 's' : ''}` : '');
+    };
+
+
+    const renderItem = ({ item }) => {
+        const horarios = Array.isArray(item.horarioPredefinidoRemedio) ?
+            item.horarioPredefinidoRemedio :
+            [];
+
+        return (
+            <View style={styles.card}>
+                <View style={styles.imagemCard}>
+                    <Image
+                        style={styles.image}
+                        source={
+                            item.fotoRemedio
+                                ? { uri: `http://127.0.0.1:8081/img/fotoRemedio/${item.fotoRemedio}` }
+                                : { uri: 'https://icon-library.com/images/pill-icon-png/pill-icon-png-0.jpg' }
+                        }
+                    />
                 </View>
 
-                <View style={styles.horariosWrapper}>
-                    {item.horarios.length > 0 ? (
-                        item.horarios.map((horario, index) => (
-                            <View key={index} style={styles.horarioItem}>
-                                <MaterialCommunityIcons
-                                    name={horariosIcones[horario] || 'clock-outline'}
-                                    size={16}
-                                    color="green"
-                                    style={{ marginRight: 4 }}
-                                />
-                                <Text style={styles.textoPredefinido}>{horario}</Text>
-                            </View>
-                        ))
-                    ) : (
-                        <Text style={[styles.textoPredefinido, { fontStyle: 'italic', color: '#aaa' }]}>
-                            Sem horários definidos
+                <View style={styles.textoCard}>
+                    <View style={styles.linhaInfo}>
+                        <Text style={styles.nomeRemedio} numberOfLines={1}>{item.nomeRemedio}</Text>
+                        <Text style={styles.textoDose}>{item.qntRemedio}{item.uniMedidaRemedio}</Text>
+                    </View>
+                    <View style={styles.topRow}>
+                        <TouchableOpacity onPress={() => abrirMenu(item)} style={styles.menuButton}>
+                            <MaterialCommunityIcons name="dots-horizontal" size={20} color="green" />
+                        </TouchableOpacity>
+                        <Fontisto
+                            name={tipoRemedioIcones[item.tipoRemedio] || tipoRemedioIcones.default}
+                            size={15}
+                            style={styles.iconePills}
+                            color={'white'}
+                        />
+                    </View>
+
+                    <View style={styles.horariosWrapper}>
+                        {horarios.length > 0 ? (
+                            horarios.map((codigo, index) => {
+                                const codigoNum = Number(codigo);
+                                const horario = horariosMapeados[codigoNum];
+
+                                return horario ? (
+                                    <View key={`horario-${index}`} style={styles.horarioItem}>
+                                        <MaterialCommunityIcons
+                                            name={horario.icone}
+                                            size={16}
+                                            color="green"
+                                            style={{ marginRight: 4 }}
+                                        />
+                                        <Text style={styles.textoPredefinido}>
+                                            {horario.texto}
+                                        </Text>
+                                    </View>
+                                ) : null;
+                            })
+                        ) : (
+                            <Text style={[styles.textoPredefinido, { fontStyle: 'italic', color: '#aaa' }]}>
+                                Sem horários definidos
+                            </Text>
+                        )}
+                    </View>
+
+                    <View style={styles.duracaoContainer}>
+                        <MaterialCommunityIcons name="chart-line-variant" size={20} color={'green'} />
+                        <Text style={styles.textoDuracao}>
+                            Duração: {formatarDuracao(item.duracaoRemedio)}
                         </Text>
-                    )}
-                </View>
+                    </View>
+                    <View style={styles.duracaoContainer}>
+                        <MaterialCommunityIcons name="clock-alert-outline" size={20} color={'green'} />
+                        <Text style={styles.textoDuracao}>
+                            Frequência: {formatarFrequencia(item.frequenciaRemedio)}
+                        </Text>
+                    </View>
 
-                <View style={styles.duracaoContainer}>
-                    <MaterialCommunityIcons name="chart-line-variant" size={20} color={'green'} />
-                    <Text style={styles.textoDuracao}>Duração: {item.duracao}</Text>
-                </View>
-                <View style={styles.duracaoContainer}>
-                    <MaterialCommunityIcons name="clock-alert-outline" size={20} color={'green'} />
-                    <Text style={styles.textoDuracao}>Frequência: {item.frequencia}</Text>
+
                 </View>
             </View>
-        </View>
-    );
+        );
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -167,15 +235,13 @@ export default function Remedio({ navigation }) {
                 </View>
             </View>
 
-            <View style={styles.medicamentosContainer}>
-                <FlatList
-                    data={remedios}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderItem}
-                    contentContainerStyle={{ paddingBottom: 100 }}
-                    showsVerticalScrollIndicator={false}
-                />
-            </View>
+            <FlatList
+                data={remedios}
+                keyExtractor={(item) => item.id ? item.id.toString() : Math.random().toString()}
+                renderItem={renderItem}
+                contentContainerStyle={{ paddingBottom: 100, alignItems: 'center' }}
+                showsVerticalScrollIndicator={false}
+            />
 
             <Modal
                 transparent={true}
@@ -184,13 +250,16 @@ export default function Remedio({ navigation }) {
                 onRequestClose={() => setModalVisible(false)}
             >
                 <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-                    <View style={styles.modalContent}>
-                        <TouchableOpacity onPress={HandleEditar} style={styles.modalOption}>
-                            <Text style={styles.modalText}>Editar</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={handleExcluir} style={styles.modalOption}>
-                            <Text style={styles.modalText}>Excluir</Text>
-                        </TouchableOpacity>
+                    <View style={styles.modalView}>
+                        <View style={styles.modalContent}>
+                            <TouchableOpacity onPress={handleEditar} style={styles.modalOption}>
+                                <Text style={styles.modalText}>Editar</Text>
+                            </TouchableOpacity>
+                            <View style={styles.modalSeparator} />
+                            <TouchableOpacity onPress={handleExcluir} style={styles.modalOption}>
+                                <Text style={[styles.modalText, { color: 'red' }]}>Excluir</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </Pressable>
             </Modal>
@@ -201,6 +270,7 @@ export default function Remedio({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        width: '100%',
         backgroundColor: '#f7f7f7',
     },
     blocoAdicionar: {
@@ -238,29 +308,29 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         elevation: 2,
     },
-    medicamentosContainer: {
-        flex: 1,
-        width: '100%',
-        alignItems: 'center',
-    },
     card: {
+        width: '100%',
+        minWidth: 400,
+        marginHorizontal: '20%',
         flexDirection: 'row',
         backgroundColor: '#fff',
         borderRadius: 10,
         padding: 10,
-        width: 350,
-        shadowColor: 'grey',
-        shadowOffset: { width: 1, height: 1 },
-        shadowOpacity: 0.4,
-        shadowRadius: 3,
+        borderWidth: 1,
+        borderColor: '#ddd',
         marginBottom: 20,
+        alignSelf: 'center',
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     imagemCard: {
-        width: '40%',
-        height: '100%',
+        width: 150,
+        height: 150,
         borderRadius: 10,
         overflow: 'hidden',
-        marginRight: 10,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        marginRight: 12
     },
     image: {
         width: '100%',
@@ -292,11 +362,13 @@ const styles = StyleSheet.create({
     },
     nomeRemedio: {
         fontSize: 16,
+        fontWeight: 'bold',
         flex: 1,
     },
     textoDose: {
-        fontSize: 14,
+        fontSize: 10,
         color: '#666',
+        marginLeft: 10,
     },
     horariosWrapper: {
         flexDirection: 'row',
@@ -330,17 +402,24 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    modalContent: {
-        backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 10,
-        width: 200,
-        alignItems: 'center',
-    },
-    modalOption: {
-        paddingVertical: 10,
+    modalView: {
         width: '100%',
         alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        width: 150,
+        overflow: 'hidden',
+    },
+    modalOption: {
+        paddingVertical: 15,
+        alignItems: 'center',
+    },
+    modalSeparator: {
+        height: 1,
+        backgroundColor: '#f0f0f0',
+        width: '100%',
     },
     modalText: {
         fontSize: 16,

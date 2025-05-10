@@ -66,17 +66,39 @@ export default function DigitarDadosRemedio({ navigation }) {
         }
     };
 
-    const formatarDuracao = (dias) => {
-        const numDias = parseInt(dias);
-        if (isNaN(numDias)) return '';
-        if (numDias < 365) return `${numDias} dias`;
+     const formatarDuracao = (dias) => {
+        const numDias = parseInt(dias) || 0;
+        
+        if (numDias === 0) return '0 dias';
+        if (numDias < 30) return `${numDias} dia${numDias > 1 ? 's' : ''}`;
+        
+        const meses = Math.floor(numDias / 30);
+        const diasRestantes = numDias % 30;
+        
+        if (meses < 12) {
+            return `${meses} mês${meses > 1 ? 'es' : ''}` + 
+                   (diasRestantes > 0 ? ` e ${diasRestantes} dia${diasRestantes > 1 ? 's' : ''}` : '');
+        }
+        
+        const anos = Math.floor(meses / 12);
+        const mesesRestantes = meses % 12;
+        
+        return `${anos} ano${anos > 1 ? 's' : ''}` + 
+               (mesesRestantes > 0 ? ` e ${mesesRestantes} mês${mesesRestantes > 1 ? 'es' : ''}` : '');
+    };
 
-        const anos = Math.floor(numDias / 365);
-        const resto = numDias % 365;
-        if (resto === 0) return `${anos} ano${anos > 1 ? 's' : ''}`;
-        if (resto < 30) return `${anos} ano${anos > 1 ? 's' : ''} e ${resto} dia${resto > 1 ? 's' : ''}`;
-        const meses = Math.floor(resto / 30);
-        return `${anos} ano${anos > 1 ? 's' : ''} e ${meses} mês${meses > 1 ? 'es' : ''}`;
+    // Função para formatar frequência (horas para dias)
+    const formatarFrequencia = (horas) => {
+        const numHoras = parseInt(horas) || 0;
+        
+        if (numHoras === 0) return '0 horas';
+        if (numHoras < 24) return `${numHoras} hora${numHoras > 1 ? 's' : ''}`;
+        
+        const dias = Math.floor(numHoras / 24);
+        const horasRestantes = numHoras % 24;
+        
+        return `${dias} dia${dias > 1 ? 's' : ''}` + 
+               (horasRestantes > 0 ? ` e ${horasRestantes} hora${horasRestantes > 1 ? 's' : ''}` : '');
     };
 
     const enviarParaAPI = async () => {
@@ -168,12 +190,12 @@ export default function DigitarDadosRemedio({ navigation }) {
         setTipoRemedio(null);
         setDuracaoRemedio('');
         setFrequenciaRemedio('');
-        setUniMedidaRemedio(null);
+        setUniMedidaRemedio('');
         setSelectedTimes([]);
         setImageUri(null);
 
         // Voltar para a tela anterior
-        navigation.goBack();
+        navigation.navigate('Lembretes de remedio');
     } catch (error) {
         console.error('Erro ao enviar:', error);
         Alert.alert('Erro', 'Falha ao enviar os dados.');
@@ -251,7 +273,7 @@ export default function DigitarDadosRemedio({ navigation }) {
             <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 5 }}>
                 <View style={[styles.rowInputs, { width: '100%' }]}>
                     <View style={{ width: '49%' }}>
-                        <Text style={styles.inputLabel}>Duração</Text>
+                        <Text style={styles.inputLabel}>Duração (em dias)</Text>
                         <View style={[styles.rowInputs, { alignItems: 'center' }, styles.input]}>
                             <MaterialCommunityIcons style={{ width: '25%' }} name='chart-line-variant' size={30} color={'green'} />
                             <TextInput
@@ -266,25 +288,32 @@ export default function DigitarDadosRemedio({ navigation }) {
                             />
                         </View>
                         {duracaoRemedio ? (
-                            <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>{formatarDuracao(duracaoRemedio)}</Text>
+                            <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>
+                                {formatarDuracao(duracaoRemedio)}
+                            </Text>
                         ) : null}
                     </View>
 
                     <View style={{ width: '49%' }}>
-                        <Text style={styles.inputLabel}>Frequência</Text>
+                        <Text style={styles.inputLabel}>Frequência (em horas)</Text>
                         <View style={[styles.rowInputs, { alignItems: 'center' }, styles.input]}>
                             <MaterialCommunityIcons style={{ width: '25%' }} name='clock-alert-outline' color={'green'} size={30} />
                             <TextInput
                                 style={{ width: '75%', outlineStyle: 'none' }}
-                                placeholder="Ex: 1x por hora"
+                                placeholder="Ex: 8 horas"
                                 value={frequenciaRemedio}
                                 onChangeText={(text) => {
                                     const cleaned = text.replace(/[^0-9]/g, '');
-                                    setFrequenciaRemedio(cleaned.slice(0, 2));
+                                    setFrequenciaRemedio(cleaned.slice(0, 3));
                                 }}
                                 keyboardType="numeric"
                             />
                         </View>
+                        {frequenciaRemedio ? (
+                            <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>
+                                {formatarFrequencia(frequenciaRemedio)}
+                            </Text>
+                        ) : null}
                     </View>
                 </View>
             </View>
