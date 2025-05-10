@@ -18,13 +18,21 @@ import Fontisto from 'react-native-vector-icons/Fontisto';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 
+// Configuração do axios no mesmo arquivo
+const api = axios.create({
+    baseURL: 'http://127.0.0.1:8081/api/', // troque localhost pelo IP da sua máquina se estiver testando no celular
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
 export default function DigitarDadosRemedio({ navigation }) {
     const [imageUri, setImageUri] = useState(null);
-    const [quantidade, setQuantidade] = useState('1');
-    const [tipoSelecionado, setTipoSelecionado] = useState(null);
-    const [duracaoRaw, setDuracaoRaw] = useState('');
-    const [frequenciaRaw, setFrequenciaRaw] = useState('');
-    const [nomeMedicamento, setNomeMedicamento] = useState('');
+    const [quantidadeRemedio, setQuantidadeRemedio] = useState('1');
+    const [tipoRemedio, setTipoRemedio] = useState(null);
+    const [duracaoRemedio, setDuracaoRemedio] = useState('');
+    const [frequenciaRemedio, setFrequenciaRemedio] = useState('');
+    const [nomeRemedio, setNomeRemedio] = useState('');
 
     const handleChooseImage = () => {
         launchImageLibrary(
@@ -45,76 +53,81 @@ export default function DigitarDadosRemedio({ navigation }) {
     };
 
     const incrementar = () => {
-        const valor = parseInt(quantidade) || 0;
-        setQuantidade(String(valor + 1));
+        const valor = parseInt(quantidadeRemedio) || 0;
+        setQuantidadeRemedio(String(valor + 1));
     };
 
     const decrementar = () => {
-        const valor = parseInt(quantidade) || 0;
+        const valor = parseInt(quantidadeRemedio) || 0;
         if (valor > 1) {
-            setQuantidade(String(valor - 1));
+            setQuantidadeRemedio(String(valor - 1));
         }
     };
 
     const formatarDuracao = (dias) => {
         const numDias = parseInt(dias);
         if (isNaN(numDias)) return '';
-
         if (numDias < 365) return `${numDias} dias`;
 
         const anos = Math.floor(numDias / 365);
         const resto = numDias % 365;
         if (resto === 0) return `${anos} ano${anos > 1 ? 's' : ''}`;
         if (resto < 30) return `${anos} ano${anos > 1 ? 's' : ''} e ${resto} dia${resto > 1 ? 's' : ''}`;
-
         const meses = Math.floor(resto / 30);
         return `${anos} ano${anos > 1 ? 's' : ''} e ${meses} mês${meses > 1 ? 'es' : ''}`;
     };
 
     const enviarParaAPI = async () => {
-        if (!nomeMedicamento.trim()) {
+        if (!nomeRemedio.trim()) {
             Alert.alert('Erro', 'Preencha o nome do medicamento.');
             return;
         }
 
-        if (!quantidade || parseInt(quantidade) <= 0) {
+        if (!quantidadeRemedio || parseInt(quantidadeRemedio) <= 0) {
             Alert.alert('Erro', 'A quantidade deve ser maior que zero.');
             return;
         }
 
-        if (!tipoSelecionado) {
+        if (!tipoRemedio) {
             Alert.alert('Erro', 'Selecione o tipo de medicação.');
             return;
         }
 
-        if (!duracaoRaw || parseInt(duracaoRaw) <= 0) {
+        if (!duracaoRemedio || parseInt(duracaoRemedio) <= 0) {
             Alert.alert('Erro', 'Informe a duração do tratamento.');
             return;
         }
 
-        if (!frequenciaRaw || parseInt(frequenciaRaw) <= 0) {
+        if (!frequenciaRemedio || parseInt(frequenciaRemedio) <= 0) {
             Alert.alert('Erro', 'Informe a frequência da medicação.');
             return;
         }
 
-        try {
-            const formData = new FormData();
+        const remedio = new FormData();
 
+        try {
             if (imageUri) {
-                formData.append('imagem', {
-                    uri: imageUri,
-                    name: 'remedio.jpg',
-                    type: 'image/jpeg',
-                });
+                const localUri = imageUri;
+                const filename = localUri.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+                const file = {
+                    uri: localUri,
+                    name: filename,
+                    type: type,
+                };
+
+                remedio.append('fotoRemedio', file);
             }
 
-            formData.append('nome', nomeMedicamento);
-            formData.append('quantidade', quantidade);
-            formData.append('tipo', tipoSelecionado);
-            formData.append('duracao', duracaoRaw);
-            formData.append('frequencia', frequenciaRaw);
+            remedio.append('nomeRemedio', nomeRemedio);
+            remedio.append('qntRemedio', quantidadeRemedio);
+            remedio.append('tipoRemedio', tipoRemedio);
+            remedio.append('duracaoRemedio', duracaoRemedio);
+            remedio.append('frequenciaRemedio', frequenciaRemedio);
 
-            const response = await axios.post('https://suaapi.com/remedios', formData, {
+            const response = await api.post('/remedio', remedio, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -154,7 +167,7 @@ export default function DigitarDadosRemedio({ navigation }) {
 
             <View style={{ width: '100%' }}>
                 <Text style={styles.inputLabel}>Nome do medicamento</Text>
-                <TextInput style={styles.input} value={nomeMedicamento} onChangeText={setNomeMedicamento} />
+                <TextInput style={styles.input} value={nomeRemedio} onChangeText={setNomeRemedio} />
             </View>
 
             <View style={{ width: '100%' }}>
@@ -166,10 +179,10 @@ export default function DigitarDadosRemedio({ navigation }) {
 
                     <TextInput
                         style={[styles.input, styles.inputQtd]}
-                        value={quantidade}
+                        value={quantidadeRemedio}
                         onChangeText={(text) => {
                             const cleaned = text.replace(/[^0-9]/g, '');
-                            setQuantidade(cleaned === '' ? '0' : cleaned);
+                            setQuantidadeRemedio(cleaned === '' ? '0' : cleaned);
                         }}
                         keyboardType="numeric"
                     />
@@ -188,8 +201,8 @@ export default function DigitarDadosRemedio({ navigation }) {
                     {tiposMedicacao.map((item) => (
                         <Pressable
                             key={item.id}
-                            style={[styles.iconBox, tipoSelecionado === item.id && styles.iconBoxSelecionado]}
-                            onPress={() => setTipoSelecionado(item.id)}
+                            style={[styles.iconBox, tipoRemedio === item.id && styles.iconBoxSelecionado]}
+                            onPress={() => setTipoRemedio(item.id)}
                         >
                             <Fontisto name={item.icon} size={30} color={'green'} />
                         </Pressable>
@@ -210,16 +223,16 @@ export default function DigitarDadosRemedio({ navigation }) {
                             <TextInput
                                 style={{ width: '75%', outlineStyle: 'none' }}
                                 placeholder="Ex: 7 dias"
-                                value={duracaoRaw}
+                                value={duracaoRemedio}
                                 onChangeText={(text) => {
                                     const cleaned = text.replace(/[^0-9]/g, '');
-                                    setDuracaoRaw(cleaned.slice(0, 4));
+                                    setDuracaoRemedio(cleaned.slice(0, 4));
                                 }}
                                 keyboardType="numeric"
                             />
                         </View>
-                        {duracaoRaw ? (
-                            <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>{formatarDuracao(duracaoRaw)}</Text>
+                        {duracaoRemedio ? (
+                            <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>{formatarDuracao(duracaoRemedio)}</Text>
                         ) : null}
                     </View>
 
@@ -230,10 +243,10 @@ export default function DigitarDadosRemedio({ navigation }) {
                             <TextInput
                                 style={{ width: '75%', outlineStyle: 'none' }}
                                 placeholder="Ex: 1x por hora"
-                                value={frequenciaRaw}
+                                value={frequenciaRemedio}
                                 onChangeText={(text) => {
                                     const cleaned = text.replace(/[^0-9]/g, '');
-                                    setFrequenciaRaw(cleaned.slice(0, 2));
+                                    setFrequenciaRemedio(cleaned.slice(0, 2));
                                 }}
                                 keyboardType="numeric"
                             />
@@ -274,14 +287,15 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     input: {
-        outlineStyle: 'none', padding: 5,
+        outlineStyle: 'none',
+        padding: 5,
         paddingVertical: 12,
         borderRadius: 5,
         backgroundColor: '#fff',
         width: '100%',
     },
     rowInputs: {
-        outlineStyle: 'none', flexDirection: 'row',
+        flexDirection: 'row',
         gap: 5,
         marginTop: 8,
     },
@@ -295,7 +309,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
     },
     inputQtd: {
-        outlineStyle: 'none', textAlign: 'center',
+        textAlign: 'center',
         width: '100%',
         marginHorizontal: 10,
     },
@@ -313,10 +327,8 @@ const styles = StyleSheet.create({
         fontWeight: '800',
     },
     inputLabel: {
-        outlineStyle: 'none',
         textAlign: 'left',
         width: '100%',
-        justifyContent: 'flex-end',
         marginBottom: 5,
     },
     cardImg: {
