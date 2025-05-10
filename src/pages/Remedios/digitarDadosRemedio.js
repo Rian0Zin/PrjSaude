@@ -20,7 +20,7 @@ import axios from 'axios';
 
 // Configuração do axios no mesmo arquivo
 const api = axios.create({
-    baseURL: 'http://127.0.0.1:8081/api/', // troque localhost pelo IP da sua máquina se estiver testando no celular
+    baseURL: 'http://127.0.0.1:8081/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -78,69 +78,86 @@ export default function DigitarDadosRemedio({ navigation }) {
     };
 
     const enviarParaAPI = async () => {
-        if (!nomeRemedio.trim()) {
-            Alert.alert('Erro', 'Preencha o nome do medicamento.');
-            return;
+    if (!nomeRemedio.trim()) {
+        Alert.alert('Erro', 'Preencha o nome do medicamento.');
+        return;
+    }
+
+    if (!quantidadeRemedio || parseInt(quantidadeRemedio) <= 0) {
+        Alert.alert('Erro', 'A quantidade deve ser maior que zero.');
+        return;
+    }
+
+    if (!tipoRemedio) {
+        Alert.alert('Erro', 'Selecione o tipo de medicação.');
+        return;
+    }
+
+    if (!duracaoRemedio || parseInt(duracaoRemedio) <= 0) {
+        Alert.alert('Erro', 'Informe a duração do tratamento.');
+        return;
+    }
+
+    if (!frequenciaRemedio || parseInt(frequenciaRemedio) <= 0) {
+        Alert.alert('Erro', 'Informe a frequência da medicação.');
+        return;
+    }
+
+    const remedio = new FormData();
+
+    // Lógica para imagem
+    if (imageUri) {
+    try {
+        let file;
+        if (imageUri.startsWith("data:image")) {
+            // Se for uma imagem base64
+            const response = await fetch(imageUri);
+            const blob = await response.blob();
+            const filename = `image_${Date.now()}.jpg`;
+            file = new File([blob], filename, { type: blob.type });
+            remedio.append("fotoRemedio", file);
+        } else {
+            // Se for uma imagem local (não Base64)
+            const localUri = imageUri;
+            const filename = localUri.split("/").pop(); // Extrair o nome do arquivo da URI
+            const match = /\.(\w+)$/.exec(filename); // Extrair o tipo da imagem
+            const type = match ? `image/${match[1]}` : "image/jpeg"; // Definir o tipo da imagem
+
+            // Criar o objeto de arquivo com a URI local
+            file = {
+                uri: localUri,
+                type: type,
+                name: filename,
+            };
+            remedio.append("fotoRemedio", file);
         }
+    } catch (error) {
+        console.error('Erro ao processar a imagem:', error);
+        Alert.alert('Erro', 'Falha ao processar a imagem.');
+        return;
+    }
+}
+    // Dados do medicamento
+    remedio.append('nomeRemedio', nomeRemedio);
+    remedio.append('qntRemedio', quantidadeRemedio);
+    remedio.append('tipoRemedio', tipoRemedio);
+    remedio.append('duracaoRemedio', duracaoRemedio);
+    remedio.append('frequenciaRemedio', frequenciaRemedio);
 
-        if (!quantidadeRemedio || parseInt(quantidadeRemedio) <= 0) {
-            Alert.alert('Erro', 'A quantidade deve ser maior que zero.');
-            return;
-        }
+    try {
+        const response = await api.post('/remedio', remedio, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
 
-        if (!tipoRemedio) {
-            Alert.alert('Erro', 'Selecione o tipo de medicação.');
-            return;
-        }
-
-        if (!duracaoRemedio || parseInt(duracaoRemedio) <= 0) {
-            Alert.alert('Erro', 'Informe a duração do tratamento.');
-            return;
-        }
-
-        if (!frequenciaRemedio || parseInt(frequenciaRemedio) <= 0) {
-            Alert.alert('Erro', 'Informe a frequência da medicação.');
-            return;
-        }
-
-        const remedio = new FormData();
-
-        try {
-            if (imageUri) {
-                const localUri = imageUri;
-                const filename = localUri.split('/').pop();
-                const match = /\.(\w+)$/.exec(filename);
-                const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-                const file = {
-                    uri: localUri,
-                    name: filename,
-                    type: type,
-                };
-
-                remedio.append('fotoRemedio', file);
-            }
-
-            remedio.append('nomeRemedio', nomeRemedio);
-            remedio.append('qntRemedio', quantidadeRemedio);
-            remedio.append('tipoRemedio', tipoRemedio);
-            remedio.append('duracaoRemedio', duracaoRemedio);
-            remedio.append('frequenciaRemedio', frequenciaRemedio);
-
-            const response = await api.post('/remedio', remedio, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            Alert.alert('Sucesso', 'Medicamento cadastrado com sucesso!');
-            navigation.goBack();
-
-        } catch (error) {
-            console.error('Erro ao enviar:', error);
-            Alert.alert('Erro', 'Falha ao enviar os dados.');
-        }
-    };
+        Alert.alert('Sucesso', 'Medicamento cadastrado com sucesso!');
+        navigation.goBack();
+    } catch (error) {
+        console.error('Erro ao enviar:', error);
+        Alert.alert('Erro', 'Falha ao enviar os dados.');
+    }
+};
 
     const tiposMedicacao = [
         { id: 'Pilula', icon: 'pills' },
@@ -155,11 +172,7 @@ export default function DigitarDadosRemedio({ navigation }) {
                 <Text style={[styles.inputLabel, { textAlign: 'center' }]}>Foto do medicamento</Text>
                 <Pressable onPress={handleChooseImage} style={styles.cardAdcImg}>
                     <Image
-                        source={
-                            imageUri
-                                ? { uri: imageUri }
-                                : { uri: 'https://icon-library.com/images/pill-icon-png/pill-icon-png-0.jpg' }
-                        }
+                        source={imageUri ? { uri: imageUri } : { uri: 'https://icon-library.com/images/pill-icon-png/pill-icon-png-0.jpg' }}
                         style={styles.previewImage}
                     />
                 </Pressable>
