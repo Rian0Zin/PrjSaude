@@ -161,6 +161,18 @@ export default function DigitarDadosRemedio({ navigation }) {
         });
 
         Alert.alert('Sucesso', 'Medicamento cadastrado com sucesso!');
+        
+        // Limpar campos após envio bem-sucedido
+        setNomeRemedio('');
+        setQuantidadeRemedio('1');
+        setTipoRemedio(null);
+        setDuracaoRemedio('');
+        setFrequenciaRemedio('');
+        setUniMedidaRemedio(null);
+        setSelectedTimes([]);
+        setImageUri(null);
+
+        // Voltar para a tela anterior
         navigation.goBack();
     } catch (error) {
         console.error('Erro ao enviar:', error);
