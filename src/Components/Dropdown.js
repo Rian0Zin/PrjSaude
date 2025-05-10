@@ -9,16 +9,14 @@ const data = [
   { label: 'G', value: 'G' },
 ];
 
-const DropdownComponent = () => {
+const DropdownComponent = ({ onSelect }) => {
   const [value, setValue] = useState(null);
 
-  const renderItem = item => {
-    return (
-      <View style={styles.item}>
-        <Text style={styles.textItem}>{item.label}</Text>
-      </View>
-    );
-  };
+  const renderItem = item => (
+    <View style={styles.item}>
+      <Text style={styles.textItem}>{item.label}</Text>
+    </View>
+  );
 
   return (
     <Dropdown
@@ -37,11 +35,13 @@ const DropdownComponent = () => {
       value={value}
       onChange={item => {
         setValue(item.value);
+        onSelect(item.value); // ← Chama a função do componente pai
       }}
       renderItem={renderItem}
     />
   );
 };
+
 
 export default DropdownComponent;
 

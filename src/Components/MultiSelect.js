@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { MultiSelect } from 'react-native-element-dropdown';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const data = [
-  { label: 'Após o almoço', value: '1', icon: 'weather-sunny' },
-  { label: 'Após a janta', value: '2', icon: 'weather-night' },
+  { label: 'Após o almoço', value: '1', icon: 'weather-sunny', horario:'12:30' },
+  { label: 'Após a janta', value: '2', icon: 'weather-night', horario:'18:30' },
 ];
 
-const MultiSelectComponent = () => {
-  const [selectedItems, setSelectedItems] = useState([]);
-
+const MultiSelectComponent = ({ selectedItems, setSelectedItems }) => {
   const renderItem = item => (
     <View style={styles.item}>
       <Text style={styles.selectedTextStyle}>{item.label}</Text>
@@ -40,9 +38,7 @@ const MultiSelectComponent = () => {
         search
         searchPlaceholder="Search..."
         onChange={items => {
-          const selectedFullItems = data.filter(d =>
-            items.includes(d.value)
-          );
+          const selectedFullItems = data.filter(d => items.includes(d.value));
           setSelectedItems(selectedFullItems);
         }}
         renderLeftIcon={() => {

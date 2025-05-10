@@ -33,6 +33,8 @@ export default function DigitarDadosRemedio({ navigation }) {
     const [duracaoRemedio, setDuracaoRemedio] = useState('');
     const [frequenciaRemedio, setFrequenciaRemedio] = useState('');
     const [nomeRemedio, setNomeRemedio] = useState('');
+    const [uniMedidaRemedio, setUniMedidaRemedio] = useState(null);
+    const [selectedTimes, setSelectedTimes] = useState([]);
 
     const handleChooseImage = () => {
         launchImageLibrary(
@@ -141,8 +143,12 @@ export default function DigitarDadosRemedio({ navigation }) {
     remedio.append('nomeRemedio', nomeRemedio);
     remedio.append('qntRemedio', quantidadeRemedio);
     remedio.append('tipoRemedio', tipoRemedio);
+    remedio.append('uniMedidaRemedio', uniMedidaRemedio);
     remedio.append('duracaoRemedio', duracaoRemedio);
     remedio.append('frequenciaRemedio', frequenciaRemedio);
+    const selectedValues = selectedTimes.map(item => item.value);
+    remedio.append('horarioPredefinidoRemedio', JSON.stringify(selectedValues));
+
 
     try {
         const response = await api.post('/remedio', remedio, {
@@ -204,7 +210,7 @@ export default function DigitarDadosRemedio({ navigation }) {
                         <Text style={styles.btnQtdText}>+</Text>
                     </Pressable>
 
-                    <DropdownComponent />
+                    <DropdownComponent onSelect={(value) => setUniMedidaRemedio(value)}/>
                 </View>
             </View>
 
@@ -224,7 +230,7 @@ export default function DigitarDadosRemedio({ navigation }) {
             </View>
 
             <View style={{ width: '100%' }}>
-                <MultiSelect style={styles.input} />
+                <MultiSelect style={styles.input} selectedItems={selectedTimes} setSelectedItems={setSelectedTimes}/>
             </View>
 
             <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 5 }}>
