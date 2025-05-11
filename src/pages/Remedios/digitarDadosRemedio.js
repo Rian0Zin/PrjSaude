@@ -10,13 +10,14 @@ import {
     TouchableOpacity,
     Alert,
 } from 'react-native';
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import DropdownComponent from '../../Components/Dropdown';
 import MultiSelect from '../../Components/MultiSelect';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
+import { CommonActions } from '@react-navigation/native';
 
 // Configuração do axios no mesmo arquivo
 const api = axios.create({
@@ -27,8 +28,7 @@ const api = axios.create({
 });
 
 export default function DigitarDadosRemedio({ route, navigation }) {
-
-    const { remedioParaEditar } = route.params || {};
+    const { remedioParaEditar, key } = route.params || {};
 
     // Resetar completamente os estados quando o parâmetro remedioParaEditar muda
     const [imageUri, setImageUri] = useState(null);
@@ -52,38 +52,7 @@ export default function DigitarDadosRemedio({ route, navigation }) {
         });
     };
 
-
-    // Efeito para carregar dados apenas quando for edição
-    useEffect(() => {
-    if (remedioParaEditar) {
-        setImageUri(remedioParaEditar.fotoRemedio 
-            ? `http://127.0.0.1:8081/img/fotoRemedio/${remedioParaEditar.fotoRemedio}` 
-            : null);
-        setQuantidadeRemedio(remedioParaEditar.qntRemedio?.toString() || '1');
-        setTipoRemedio(remedioParaEditar.tipoRemedio || null);
-        setDuracaoRemedio(remedioParaEditar.duracaoRemedio?.toString() || '');
-        setFrequenciaRemedio(remedioParaEditar.frequenciaRemedio?.toString() || '');
-        setNomeRemedio(remedioParaEditar.nomeRemedio || '');
-        setUniMedidaRemedio(remedioParaEditar.uniMedidaRemedio || null);
-        
-        // SOLUÇÃO DEFINITIVA PARA OS HORÁRIOS
-        try {
-            const horarios = Array.isArray(remedioParaEditar.horarioPredefinidoRemedio)
-                ? remedioParaEditar.horarioPredefinidoRemedio
-                : [];
-            
-            // Converta para o formato que o MultiSelect espera
-            setSelectedTimes(horarios.map(num => ({
-                value: num.toString(), // Garante que é string
-                label: `Horário ${num}` // Ou o formato que seu componente usa
-            })));
-            
-        } catch (error) {
-            console.error('Erro ao formatar horários:', error);
-            setSelectedTimes([]);
-        }
-    }else {
-        // Reset para novo remédio
+    const resetarEstados = () => {
         setImageUri(null);
         setQuantidadeRemedio('1');
         setTipoRemedio(null);
@@ -92,12 +61,49 @@ export default function DigitarDadosRemedio({ route, navigation }) {
         setNomeRemedio('');
         setUniMedidaRemedio(null);
         setSelectedTimes([]);
-    }
+    };
 
-    navigation.setOptions({
-        title: remedioParaEditar ? 'Editar Remédio' : 'Adicionar Remédio'
-    });
-}, [route.params?.remedioParaEditar]);
+
+    // Efeito para carregar dados apenas quando for edição
+    useEffect(() => {
+        if (remedioParaEditar) {
+            setImageUri(remedioParaEditar.fotoRemedio
+                ? `http://127.0.0.1:8081/img/fotoRemedio/${remedioParaEditar.fotoRemedio}`
+                : null);
+            setQuantidadeRemedio(remedioParaEditar.qntRemedio?.toString() || '1');
+            setTipoRemedio(remedioParaEditar.tipoRemedio || null);
+            setDuracaoRemedio(remedioParaEditar.duracaoRemedio?.toString() || '');
+            setFrequenciaRemedio(remedioParaEditar.frequenciaRemedio?.toString() || '');
+            setNomeRemedio(remedioParaEditar.nomeRemedio || '');
+            setUniMedidaRemedio(remedioParaEditar.uniMedidaRemedio || null);
+
+            // SOLUÇÃO DEFINITIVA PARA OS HORÁRIOS
+            try {
+                const horarios = Array.isArray(remedioParaEditar.horarioPredefinidoRemedio)
+                    ? remedioParaEditar.horarioPredefinidoRemedio
+                    : [];
+
+                // Converta para o formato que o MultiSelect espera
+                setSelectedTimes(horarios.map(num => ({
+                    value: num.toString(), // Garante que é string
+                    label: `Horário ${num}` // Ou o formato que seu componente usa
+                })));
+
+            } catch (error) {
+                console.error('Erro ao formatar horários:', error);
+                setSelectedTimes([]);
+            }
+        } else {
+            resetarEstados();
+            console.log('Estados resetados para novo remédio'); // Debug
+        }
+
+        navigation.setOptions({
+            title: remedioParaEditar ? 'Editar Remédio' : 'Adicionar Remédio'
+        });
+    }, [route.params?.remedioParaEditar, key]); // Adicione key como dependência
+
+
     const handleChooseImage = () => {
         launchImageLibrary(
             {
@@ -163,47 +169,47 @@ export default function DigitarDadosRemedio({ route, navigation }) {
             (horasRestantes > 0 ? ` e ${horasRestantes} hora${horasRestantes > 1 ? 's' : ''}` : '');
     };
 
-const enviarParaAPI = async () => {
-    if (!nomeRemedio.trim()) {
-        Alert.alert('Erro', 'Preencha o nome do medicamento.');
-        return;
-    }
-
-    // Converter imagem para base64 se for nova
-    let fotoBase64 = null;
-    if (imageUri && !imageUri.includes('http://127.0.0.1:8081')) {
-        try {
-            const response = await fetch(imageUri);
-            const blob = await response.blob();
-            fotoBase64 = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        } catch (error) {
-            console.error('Erro ao converter imagem:', error);
-            Alert.alert('Erro', 'Não foi possível processar a imagem');
+    const enviarParaAPI = async () => {
+        if (!nomeRemedio.trim()) {
+            Alert.alert('Erro', 'Preencha o nome do medicamento.');
             return;
         }
-    }
 
-    // Garantir que todos os campos sejam strings
-    const dados = {
-        nomeRemedio: nomeRemedio.toString(),
-        qntRemedio: quantidadeRemedio.toString(),
-        tipoRemedio: tipoRemedio ? tipoRemedio.toString() : '',
-        uniMedidaRemedio: uniMedidaRemedio ? uniMedidaRemedio.toString() : '',
-        duracaoRemedio: duracaoRemedio.toString(),
-        frequenciaRemedio: frequenciaRemedio.toString(),
-        horarioPredefinidoRemedio: selectedTimes.map(item => parseInt(item.value)),
-        fotoBase64: fotoBase64 || null,
-        fotoRemedio: remedioParaEditar?.fotoRemedio ? remedioParaEditar.fotoRemedio.toString() : null
-    };
+        // Converter imagem para base64 se for nova
+        let fotoBase64 = null;
+        if (imageUri && !imageUri.includes('http://127.0.0.1:8081')) {
+            try {
+                const response = await fetch(imageUri);
+                const blob = await response.blob();
+                fotoBase64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                console.error('Erro ao converter imagem:', error);
+                Alert.alert('Erro', 'Não foi possível processar a imagem');
+                return;
+            }
+        }
 
-    console.log('Dados enviados:', JSON.stringify(dados, null, 2)); // DEBUG detalhado
+        // Garantir que todos os campos sejam strings
+        const dados = {
+            nomeRemedio: nomeRemedio.toString(),
+            qntRemedio: quantidadeRemedio.toString(),
+            tipoRemedio: tipoRemedio ? tipoRemedio.toString() : '',
+            uniMedidaRemedio: uniMedidaRemedio ? uniMedidaRemedio.toString() : '',
+            duracaoRemedio: duracaoRemedio.toString(),
+            frequenciaRemedio: frequenciaRemedio.toString(),
+            horarioPredefinidoRemedio: selectedTimes.map(item => parseInt(item.value)),
+            fotoBase64: fotoBase64 || null,
+            fotoRemedio: remedioParaEditar?.fotoRemedio ? remedioParaEditar.fotoRemedio.toString() : null
+        };
 
-    try {
+        console.log('Dados enviados:', JSON.stringify(dados, null, 2)); // DEBUG detalhado
+
+        try {
         const config = { 
             headers: { 
                 'Content-Type': 'application/json',
@@ -216,12 +222,17 @@ const enviarParaAPI = async () => {
             : '/remedio';
             
         const response = await api.post(url, dados, config);
-        
-        Alert.alert('Sucesso', remedioParaEditar 
-            ? 'Medicamento atualizado com sucesso!'
-            : 'Medicamento cadastrado com sucesso!');
-            
-        navigation.navigate('Lembretes de remedio');
+
+        // SOLUÇÃO DEFINITIVA PARA NAVEGAÇÃO
+        navigation.dispatch(
+            CommonActions.reset({
+                index: 0,
+                routes: [
+                    { name: 'Lembretes de remedio' }
+                ],
+            })
+        );
+
     } catch (error) {
         console.error('Erro completo:', error);
         console.error('Resposta do erro:', error.response?.data);
@@ -282,7 +293,7 @@ const enviarParaAPI = async () => {
                         <Text style={styles.btnQtdText}>+</Text>
                     </Pressable>
 
-                    <DropdownComponent 
+                    <DropdownComponent
                         onSelect={(value) => setUniMedidaRemedio(value)}
                         selectedValue={uniMedidaRemedio}  // Passe o valor atual para o dropdown
                     />
