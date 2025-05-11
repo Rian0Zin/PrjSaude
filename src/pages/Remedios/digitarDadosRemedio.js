@@ -78,7 +78,6 @@ export default function DigitarDadosRemedio({ route, navigation }) {
                 label: `Horário ${num}` // Ou o formato que seu componente usa
             })));
             
-            console.log('Horários formatados para MultiSelect:', horarios);
         } catch (error) {
             console.error('Erro ao formatar horários:', error);
             setSelectedTimes([]);
@@ -99,10 +98,6 @@ export default function DigitarDadosRemedio({ route, navigation }) {
         title: remedioParaEditar ? 'Editar Remédio' : 'Adicionar Remédio'
     });
 }, [route.params?.remedioParaEditar]);
-useEffect(() => {
-    console.log('Horários carregados:', selectedTimes);
-}, [selectedTimes]);
-
     const handleChooseImage = () => {
         launchImageLibrary(
             {
@@ -182,7 +177,7 @@ const enviarParaAPI = async () => {
             const blob = await response.blob();
             fotoBase64 = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
                 reader.onerror = reject;
                 reader.readAsDataURL(blob);
             });
@@ -193,16 +188,20 @@ const enviarParaAPI = async () => {
         }
     }
 
+    // Garantir que todos os campos sejam strings
     const dados = {
-        nomeRemedio,
-        qntRemedio: quantidadeRemedio,
-        tipoRemedio: tipoRemedio || '',
-        uniMedidaRemedio: uniMedidaRemedio || '',
-        duracaoRemedio,
-        frequenciaRemedio,
+        nomeRemedio: nomeRemedio.toString(),
+        qntRemedio: quantidadeRemedio.toString(),
+        tipoRemedio: tipoRemedio ? tipoRemedio.toString() : '',
+        uniMedidaRemedio: uniMedidaRemedio ? uniMedidaRemedio.toString() : '',
+        duracaoRemedio: duracaoRemedio.toString(),
+        frequenciaRemedio: frequenciaRemedio.toString(),
         horarioPredefinidoRemedio: selectedTimes.map(item => parseInt(item.value)),
-        fotoRemedio: fotoBase64 || (remedioParaEditar?.fotoRemedio || null)
+        fotoBase64: fotoBase64 || null,
+        fotoRemedio: remedioParaEditar?.fotoRemedio ? remedioParaEditar.fotoRemedio.toString() : null
     };
+
+    console.log('Dados enviados:', JSON.stringify(dados, null, 2)); // DEBUG detalhado
 
     try {
         const config = { 
@@ -244,8 +243,6 @@ const enviarParaAPI = async () => {
         { id: 'Xarope', icon: 'test-bottle' },
         { id: 'Injeção', icon: 'injection-syringe' },
     ];
-
-    console.log('SelectedTimes:', selectedTimes);
 
     return (
         <SafeAreaView style={styles.container}>
