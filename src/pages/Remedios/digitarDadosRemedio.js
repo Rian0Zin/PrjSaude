@@ -42,7 +42,6 @@ export default function DigitarDadosRemedio({ route, navigation }) {
 
     // Efeito para carregar dados apenas quando for edição
     useEffect(() => {
-        const { remedioParaEditar } = route.params || {};
         
         if (remedioParaEditar) {
             setImageUri(remedioParaEditar.fotoRemedio 
