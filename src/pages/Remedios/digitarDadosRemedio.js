@@ -168,58 +168,46 @@ useEffect(() => {
             (horasRestantes > 0 ? ` e ${horasRestantes} hora${horasRestantes > 1 ? 's' : ''}` : '');
     };
 
-     const enviarParaAPI = async () => {
+const enviarParaAPI = async () => {
     if (!nomeRemedio.trim()) {
         Alert.alert('Erro', 'Preencha o nome do medicamento.');
         return;
     }
 
-    const remedio = new FormData();
-
-    // 1. Campos básicos
-    remedio.append('nomeRemedio', nomeRemedio);
-    remedio.append('qntRemedio', quantidadeRemedio);
-    remedio.append('tipoRemedio', tipoRemedio || '');
-    remedio.append('uniMedidaRemedio', uniMedidaRemedio || '');
-    remedio.append('duracaoRemedio', duracaoRemedio);
-    remedio.append('frequenciaRemedio', frequenciaRemedio);
-
-    // Comente ou remova todo o bloco de tratamento de imagem:
-    // if (imageUri && !imageUri.includes('http://127.0.0.1:8081')) {
-    //     try {
-    //         // ... código de processamento de imagem ...
-    //     } catch (error) {
-    //         console.error('Erro ao processar imagem:', error);
-    //         Alert.alert('Erro', 'Não foi possível carregar a imagem');
-    //         return;
-    //     }
-    // } else if (remedioParaEditar?.fotoRemedio) {
-    //     remedio.append('fotoRemedio', remedioParaEditar.fotoRemedio);
-    // }
-    
-
-    // 3. Horários predefinidos - Correção definitiva
-    try {
-        const horariosArray = selectedTimes.map(item => parseInt(item.value));
-        // Then append as JSON string
-        remedio.append('horarioPredefinidoRemedio', JSON.stringify(horariosArray));
-    } catch (error) {
-        console.error('Erro ao formatar horários:', error);
-        Alert.alert('Erro', 'Formato de horários inválido');
-        return;
+    // Converter imagem para base64 se for nova
+    let fotoBase64 = null;
+    if (imageUri && !imageUri.includes('http://127.0.0.1:8081')) {
+        try {
+            const response = await fetch(imageUri);
+            const blob = await response.blob();
+            fotoBase64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.error('Erro ao converter imagem:', error);
+            Alert.alert('Erro', 'Não foi possível processar a imagem');
+            return;
+        }
     }
 
-
-    // DEBUG: Verifique todo o FormData antes de enviar
-    console.log('Dados completos a serem enviados:');
-    for (let [key, value] of remedio.entries()) {
-        console.log(key, value);
-    }
+    const dados = {
+        nomeRemedio,
+        qntRemedio: quantidadeRemedio,
+        tipoRemedio: tipoRemedio || '',
+        uniMedidaRemedio: uniMedidaRemedio || '',
+        duracaoRemedio,
+        frequenciaRemedio,
+        horarioPredefinidoRemedio: selectedTimes.map(item => parseInt(item.value)),
+        fotoRemedio: fotoBase64 || (remedioParaEditar?.fotoRemedio || null)
+    };
 
     try {
         const config = { 
             headers: { 
-                'Content-Type': 'multipart/form-data',
+                'Content-Type': 'application/json',
                 'Accept': 'application/json'
             } 
         };
@@ -228,7 +216,7 @@ useEffect(() => {
             ? `/remedio/${remedioParaEditar.idRemedio}`
             : '/remedio';
             
-        const response = await api.post(url, remedio, config);
+        const response = await api.post(url, dados, config);
         
         Alert.alert('Sucesso', remedioParaEditar 
             ? 'Medicamento atualizado com sucesso!'
@@ -240,10 +228,10 @@ useEffect(() => {
         console.error('Resposta do erro:', error.response?.data);
         
         let errorMessage = 'Falha ao enviar os dados.';
-        if (error.response?.data?.erro) {
-            errorMessage = error.response.data.erro;
-        } else if (error.response?.data?.message) {
+        if (error.response?.data?.message) {
             errorMessage = error.response.data.message;
+        } else if (error.response?.data?.error) {
+            errorMessage = error.response.data.error;
         }
         
         Alert.alert('Erro', errorMessage);
