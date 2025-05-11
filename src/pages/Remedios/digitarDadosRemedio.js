@@ -40,47 +40,68 @@ export default function DigitarDadosRemedio({ route, navigation }) {
     const [uniMedidaRemedio, setUniMedidaRemedio] = useState(null);
     const [selectedTimes, setSelectedTimes] = useState([]);
 
+    const handleSelectTime = (time) => {
+        const timeValue = typeof time === 'object' ? time.value : time;
+        setSelectedTimes(prev => {
+            const exists = prev.some(item => item.value === timeValue);
+            if (exists) {
+                return prev.filter(item => item.value !== timeValue);
+            } else {
+                return [...prev, { value: timeValue.toString(), label: `Horário ${timeValue}` }];
+            }
+        });
+    };
+
+
     // Efeito para carregar dados apenas quando for edição
     useEffect(() => {
+    if (remedioParaEditar) {
+        setImageUri(remedioParaEditar.fotoRemedio 
+            ? `http://127.0.0.1:8081/img/fotoRemedio/${remedioParaEditar.fotoRemedio}` 
+            : null);
+        setQuantidadeRemedio(remedioParaEditar.qntRemedio?.toString() || '1');
+        setTipoRemedio(remedioParaEditar.tipoRemedio || null);
+        setDuracaoRemedio(remedioParaEditar.duracaoRemedio?.toString() || '');
+        setFrequenciaRemedio(remedioParaEditar.frequenciaRemedio?.toString() || '');
+        setNomeRemedio(remedioParaEditar.nomeRemedio || '');
+        setUniMedidaRemedio(remedioParaEditar.uniMedidaRemedio || null);
         
-        if (remedioParaEditar) {
-            setImageUri(remedioParaEditar.fotoRemedio 
-                ? `http://127.0.0.1:8081/img/fotoRemedio/${remedioParaEditar.fotoRemedio}`
-                : null);
-            setQuantidadeRemedio(remedioParaEditar.qntRemedio?.toString() || '1');
-            setTipoRemedio(remedioParaEditar.tipoRemedio || null);
-            setDuracaoRemedio(remedioParaEditar.duracaoRemedio?.toString() || '');
-            setFrequenciaRemedio(remedioParaEditar.frequenciaRemedio?.toString() || '');
-            setNomeRemedio(remedioParaEditar.nomeRemedio || '');
-            setUniMedidaRemedio(remedioParaEditar.uniMedidaRemedio || null);
+        // SOLUÇÃO DEFINITIVA PARA OS HORÁRIOS
+        try {
+            const horarios = Array.isArray(remedioParaEditar.horarioPredefinidoRemedio)
+                ? remedioParaEditar.horarioPredefinidoRemedio
+                : [];
             
-            try {
-                const horarios = remedioParaEditar.horarioPredefinidoRemedio
-                    ? Array.isArray(remedioParaEditar.horarioPredefinidoRemedio)
-                        ? remedioParaEditar.horarioPredefinidoRemedio
-                        : JSON.parse(remedioParaEditar.horarioPredefinidoRemedio || '[]')
-                    : [];
-                setSelectedTimes(horarios.map(item => ({ value: item.toString() })));
-            } catch (error) {
-                console.error('Erro ao parsear horários:', error);
-                setSelectedTimes([]);
-            }
-        } else {
-            // Resetar todos os estados para valores padrão
-            setImageUri(null);
-            setQuantidadeRemedio('1');
-            setTipoRemedio(null);
-            setDuracaoRemedio('');
-            setFrequenciaRemedio('');
-            setNomeRemedio('');
-            setUniMedidaRemedio(null);
+            // Converta para o formato que o MultiSelect espera
+            setSelectedTimes(horarios.map(num => ({
+                value: num.toString(), // Garante que é string
+                label: `Horário ${num}` // Ou o formato que seu componente usa
+            })));
+            
+            console.log('Horários formatados para MultiSelect:', horarios);
+        } catch (error) {
+            console.error('Erro ao formatar horários:', error);
             setSelectedTimes([]);
         }
-        
-        navigation.setOptions({
-            title: remedioParaEditar ? 'Editar Remédio' : 'Adicionar Remédio'
-        });
-    }, [route.params?.remedioParaEditar]);
+    }else {
+        // Reset para novo remédio
+        setImageUri(null);
+        setQuantidadeRemedio('1');
+        setTipoRemedio(null);
+        setDuracaoRemedio('');
+        setFrequenciaRemedio('');
+        setNomeRemedio('');
+        setUniMedidaRemedio(null);
+        setSelectedTimes([]);
+    }
+
+    navigation.setOptions({
+        title: remedioParaEditar ? 'Editar Remédio' : 'Adicionar Remédio'
+    });
+}, [route.params?.remedioParaEditar]);
+useEffect(() => {
+    console.log('Horários carregados:', selectedTimes);
+}, [selectedTimes]);
 
     const handleChooseImage = () => {
         launchImageLibrary(
@@ -147,7 +168,7 @@ export default function DigitarDadosRemedio({ route, navigation }) {
             (horasRestantes > 0 ? ` e ${horasRestantes} hora${horasRestantes > 1 ? 's' : ''}` : '');
     };
 
-   const enviarParaAPI = async () => {
+     const enviarParaAPI = async () => {
     if (!nomeRemedio.trim()) {
         Alert.alert('Erro', 'Preencha o nome do medicamento.');
         return;
@@ -155,79 +176,77 @@ export default function DigitarDadosRemedio({ route, navigation }) {
 
     const remedio = new FormData();
 
-    // Lógica para imagem - Corrigida
-    if (imageUri && !imageUri.includes('http://127.0.0.1:8081')) {
-        try {
-        let file;
-        if (imageUri.startsWith("data:image")) {
-            // Se for uma imagem base64
-            const response = await fetch(imageUri);
-            const blob = await response.blob();
-            const filename = `image_${Date.now()}.jpg`;
-            file = new File([blob], filename, { type: blob.type });
-            remedio.append("fotoRemedio", file);
-        } else {
-            // Se for uma imagem local (não Base64)
-            const localUri = imageUri;
-            const filename = localUri.split("/").pop(); // Extrair o nome do arquivo da URI
-            const match = /\.(\w+)$/.exec(filename); // Extrair o tipo da imagem
-            const type = match ? `image/${match[1]}` : "image/jpeg"; // Definir o tipo da imagem
-
-            // Criar o objeto de arquivo com a URI local
-            file = {
-                uri: localUri,
-                type: type,
-                name: filename,
-            };
-            remedio.append("fotoRemedio", file);
-        }
-    } catch (error) {
-        console.error('Erro ao processar a imagem:', error);
-        Alert.alert('Erro', 'Falha ao processar a imagem.');
-        return;
-    }
-    } else if (remedioParaEditar?.fotoRemedio) {
-        // Mantém a foto existente se não foi alterada
-        remedio.append('fotoRemedio', remedioParaEditar.fotoRemedio);
-    }
-
-    // Restante dos dados
+    // 1. Campos básicos
     remedio.append('nomeRemedio', nomeRemedio);
     remedio.append('qntRemedio', quantidadeRemedio);
-    remedio.append('tipoRemedio', tipoRemedio);
-    remedio.append('uniMedidaRemedio', uniMedidaRemedio);
+    remedio.append('tipoRemedio', tipoRemedio || '');
+    remedio.append('uniMedidaRemedio', uniMedidaRemedio || '');
     remedio.append('duracaoRemedio', duracaoRemedio);
     remedio.append('frequenciaRemedio', frequenciaRemedio);
 
-    const selectedValues = selectedTimes.map(item => parseInt(item.value, 10));
-    remedio.append('horarioPredefinidoRemedio', JSON.stringify(selectedValues));
+    // Comente ou remova todo o bloco de tratamento de imagem:
+    // if (imageUri && !imageUri.includes('http://127.0.0.1:8081')) {
+    //     try {
+    //         // ... código de processamento de imagem ...
+    //     } catch (error) {
+    //         console.error('Erro ao processar imagem:', error);
+    //         Alert.alert('Erro', 'Não foi possível carregar a imagem');
+    //         return;
+    //     }
+    // } else if (remedioParaEditar?.fotoRemedio) {
+    //     remedio.append('fotoRemedio', remedioParaEditar.fotoRemedio);
+    // }
+    
+
+    // 3. Horários predefinidos - Correção definitiva
+    try {
+        const horariosArray = selectedTimes.map(item => parseInt(item.value));
+        // Then append as JSON string
+        remedio.append('horarioPredefinidoRemedio', JSON.stringify(horariosArray));
+    } catch (error) {
+        console.error('Erro ao formatar horários:', error);
+        Alert.alert('Erro', 'Formato de horários inválido');
+        return;
+    }
+
+
+    // DEBUG: Verifique todo o FormData antes de enviar
+    console.log('Dados completos a serem enviados:');
+    for (let [key, value] of remedio.entries()) {
+        console.log(key, value);
+    }
 
     try {
-        let response;
-        const config = {
-            headers: {
+        const config = { 
+            headers: { 
                 'Content-Type': 'multipart/form-data',
-            },
+                'Accept': 'application/json'
+            } 
         };
 
-        if (remedioParaEditar) {
-            response = await api.put(`/remedio/${remedioParaEditar.idRemedio}`, remedio, config);
-            Alert.alert('Sucesso', 'Medicamento atualizado com sucesso!');
-        } else {
-            response = await api.post('/remedio', remedio, config);
-            Alert.alert('Sucesso', 'Medicamento cadastrado com sucesso!');
-        }
-
-        // Limpar campos se for criação
-        if (!remedioParaEditar) {
-            // ... (código existente)
-        }
-
+        const url = remedioParaEditar?.idRemedio 
+            ? `/remedio/${remedioParaEditar.idRemedio}`
+            : '/remedio';
+            
+        const response = await api.post(url, remedio, config);
+        
+        Alert.alert('Sucesso', remedioParaEditar 
+            ? 'Medicamento atualizado com sucesso!'
+            : 'Medicamento cadastrado com sucesso!');
+            
         navigation.navigate('Lembretes de remedio');
     } catch (error) {
         console.error('Erro completo:', error);
-        console.error('Resposta de erro:', error.response?.data);
-        Alert.alert('Erro', error.response?.data?.message || 'Falha ao enviar os dados.');
+        console.error('Resposta do erro:', error.response?.data);
+        
+        let errorMessage = 'Falha ao enviar os dados.';
+        if (error.response?.data?.erro) {
+            errorMessage = error.response.data.erro;
+        } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        }
+        
+        Alert.alert('Erro', errorMessage);
     }
 };
 
@@ -237,6 +256,8 @@ export default function DigitarDadosRemedio({ route, navigation }) {
         { id: 'Xarope', icon: 'test-bottle' },
         { id: 'Injeção', icon: 'injection-syringe' },
     ];
+
+    console.log('SelectedTimes:', selectedTimes);
 
     return (
         <SafeAreaView style={styles.container}>
