@@ -15,10 +15,13 @@ import Frutas from '../pages/Frutas';
 import DigitarDadosImc from '../pages/IMC/digitarDadosImc';
 import BeberAgua from '../pages/BeberAgua/BeberAgua';
 import Vacinas from '../pages/Vacinas';
-import Teste from '../pages/Diabetes';
+import Diabetes from '../pages/Diabetes';
 import Login from '../pages/Login';
 import DigitarDadosRemedio from '../pages/Remedios/digitarDadosRemedio';
 import Remedio from '../pages/Remedios';
+import FazerRegistroDiabete from '../pages/Diabetes/fazerRegistroDiabete';
+import Pressao from '../pages/Pressão';
+import FazerRegistroPressao from '../pages/Pressão/fazerRegistroPressao';
 const Drawer = createDrawerNavigator();
 
 export default function App() {
@@ -38,7 +41,10 @@ export default function App() {
         <Drawer.Screen name='Vacinas' component={Vacinas} options={{header:()=> <Header title='Vacinação'/>}}/>
         <Drawer.Screen name='Remedio' component={DigitarDadosRemedio} options={{header:()=> <Header title='Medicamentos'/>,  drawerItemStyle:{display:'none'}}}/>
         <Drawer.Screen name='Lembretes de remedio' component={Remedio} options={{header:()=> <Header title='Medicamentos'/>,}}/>
-        <Drawer.Screen name='Teste' component={Teste} options={{header:()=> <Header title='DiabeteTeste'/>}}/>
+        <Drawer.Screen name='Diabetes' component={Diabetes} options={{header:()=> <Header title='Diabetes'/>}}/>
+        <Drawer.Screen name='Digitar diabete' component={FazerRegistroDiabete}  options={{header:()=> <Header title='Diabetes'/>, drawerItemStyle:{display:'none'}}}/>
+        <Drawer.Screen name='Pressão' component={Pressao} options={{header:()=> <Header title='Pressão'/>}}/>
+        <Drawer.Screen name='Digitar pressão' component={FazerRegistroPressao} options={{header:()=> <Header title='Pressão'/>, drawerItemStyle:{display:'none'}}}/>
 
       </Drawer.Navigator>
     </NavigationContainer>

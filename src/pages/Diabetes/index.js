@@ -1,76 +1,61 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, SafeAreaView, Pressable, TouchableOpacity } from 'react-native';
 import axios from 'axios';
-
+import { Picker } from '@react-native-picker/picker';
+import styles from './styles';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import { Ionicons } from '@expo/vector-icons'; // ícone opcional
 //
-export default function Teste() {
-  const [cep, setCep] = useState('');
-  const [endereco, setEndereco] = useState('');
-  const [bairro, setBairro] = useState('');
-  const [estado, setEstado] = useState('');
-  const [uf, setUf] = useState('');
-  const [regiao, setRegiao] = useState('');
+export default function Diabetes({ navigation }) {
 
-  const dados ={
-    nomeUsuario:'bosta'
-    
-  }
-
-  const carregar = async () => {
-    
-   await axios.post('http://127.0.0.1:8000/api/criar', dados)
-    //await axios.get('https://viacep.com.br/ws/01001000/json/')
-    .then(response => {
-      console.log(response.data);
-    })
-    .catch(error => {
-      console.error(error);
-    });
-
-  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.titulo}>Digite o Cep:</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Escreva aqui"
-        value={cep}
-        onChangeText={setCep}
-      />
-      <Button title="Mostrar mensagem" onPress={()=>{carregar()}} />
-       <Text style={styles.mensagem}>Endereco:  {endereco}</Text>
-       <Text style={styles.mensagem}>Bairro:  {bairro}</Text>
-       <Text style={styles.mensagem}>Estado:  {estado}</Text>
-       <Text style={styles.mensagem}>UF:  {uf}</Text>
-       <Text style={styles.mensagem}>Região:  {regiao}</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.ultimaMedida}>
+        <Text style={styles.titulo}>Última Medida</Text>
+        <View style={styles.medidaItem}>
+        <Text style={styles.medidaTitulo}>Glicemia</Text>
+        <Text style={styles.qntMedida}>100 mg/dL </Text>
+        </View>
+        <View style={styles.ultimaMedidaItem}>
+          <Text style={styles.data}>Data: 01/01/2023</Text> <Text style={styles.horario}> 03:33 </Text>
+        </View>
+      </View>
+      <View style={styles.indicadores}>
+        <Text style={styles.tituloGrafico}>Níveis de Glicemia</Text>
 
+        <Text style={styles.legenda}>Baixa (20%)</Text>
+        <View style={styles.barra}>
+          <View style={[styles.barraInterna, { width: '20%', backgroundColor: '#3498db' }]} />
+        </View>
 
+        <Text style={styles.legenda}>Normal (60%)</Text>
+        <View style={styles.barra}>
+          <View style={[styles.barraInterna, { width: '60%', backgroundColor: '#2ecc71' }]} />
+        </View>
 
-    </View>
+        <Text style={styles.legenda}>Alta (20%)</Text>
+        <View style={styles.barra}>
+          <View style={[styles.barraInterna, { width: '20%', backgroundColor: '#e74c3c' }]} />
+        </View>
+      </View>
+      <View style={styles.historicoGlicemia}>
+        <View style={styles.viewTituloHistorico}>
+          <Text style={styles.tituloHistorico}> Histórico de glicemia   </Text>
+        </View>
+        <View style={styles.historicoGlicemiaItem}>
+          <Text style={styles.historicoGlicemiaValor}>100 mg/dL</Text>
+          <Text style={styles.historicoGlicemiaPeriodoRefeicao}> Periodo da refeição </Text>
+          <View style={styles.dataHoraHistorico}>
+            <Text style={styles.historicoGlicemiaData}>01/01/2023</Text>
+            <Text style={styles.historicoGlicemiaHorario}>03:33</Text>
+          </View>
+        </View>
+      </View>
+      <TouchableOpacity style={styles.botaoFlutuante} onPress={() => navigation.navigate('Digitar diabete')}>
+        <AntDesign name="plus" size={24} color="#fff" />
+        {/* Ou use só texto: <Text style={styles.texto}>+</Text> */}
+      </TouchableOpacity>
+    </SafeAreaView>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  titulo: {
-    fontSize: 24,
-    marginBottom: 10,
-  },
-  input: {
-    height: 50,
-    borderColor: '#999',
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    marginBottom: 20,
-    borderRadius: 8,
-  },
-  mensagem: {
-    marginTop: 20,
-    fontSize: 18,
-    color: '#333',
-  },
-});
+};
