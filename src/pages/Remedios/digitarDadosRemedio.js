@@ -210,43 +210,43 @@ export default function DigitarDadosRemedio({ route, navigation }) {
         console.log('Dados enviados:', JSON.stringify(dados, null, 2)); // DEBUG detalhado
 
         try {
-        const config = { 
-            headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            } 
-        };
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            };
 
-        const url = remedioParaEditar?.idRemedio 
-            ? `/remedio/${remedioParaEditar.idRemedio}`
-            : '/remedio';
-            
-        const response = await api.post(url, dados, config);
+            const url = remedioParaEditar?.idRemedio
+                ? `/remedio/${remedioParaEditar.idRemedio}`
+                : '/remedio';
 
-        // SOLUÇÃO DEFINITIVA PARA NAVEGAÇÃO
-        navigation.dispatch(
-            CommonActions.reset({
-                index: 0,
-                routes: [
-                    { name: 'Lembretes de remedio' }
-                ],
-            })
-        );
+            const response = await api.post(url, dados, config);
 
-    } catch (error) {
-        console.error('Erro completo:', error);
-        console.error('Resposta do erro:', error.response?.data);
-        
-        let errorMessage = 'Falha ao enviar os dados.';
-        if (error.response?.data?.message) {
-            errorMessage = error.response.data.message;
-        } else if (error.response?.data?.error) {
-            errorMessage = error.response.data.error;
+            // SOLUÇÃO DEFINITIVA PARA NAVEGAÇÃO
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [
+                        { name: 'Lembretes de remedio' }
+                    ],
+                })
+            );
+
+        } catch (error) {
+            console.error('Erro completo:', error);
+            console.error('Resposta do erro:', error.response?.data);
+
+            let errorMessage = 'Falha ao enviar os dados.';
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.data?.error) {
+                errorMessage = error.response.data.error;
+            }
+
+            Alert.alert('Erro', errorMessage);
         }
-        
-        Alert.alert('Erro', errorMessage);
-    }
-};
+    };
 
     const tiposMedicacao = [
         { id: 'Pilula', icon: 'pills' },
@@ -256,123 +256,128 @@ export default function DigitarDadosRemedio({ route, navigation }) {
     ];
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.cardImg}>
-                <Text style={[styles.inputLabel, { textAlign: 'center' }]}>Foto do medicamento</Text>
-                <Pressable onPress={handleChooseImage} style={styles.cardAdcImg}>
-                    <Image
-                        source={imageUri ? { uri: imageUri } : { uri: 'https://icon-library.com/images/pill-icon-png/pill-icon-png-0.jpg' }}
-                        style={styles.previewImage}
-                    />
-                </Pressable>
-            </View>
-
-            <View style={{ width: '100%' }}>
-                <Text style={styles.inputLabel}>Nome do medicamento</Text>
-                <TextInput style={styles.input} value={nomeRemedio} onChangeText={setNomeRemedio} />
-            </View>
-
-            <View style={{ width: '100%' }}>
-                <Text style={styles.inputLabel}>Quantidade do medicamento</Text>
-                <View style={[styles.rowInputs, { alignItems: 'center' }]}>
-                    <Pressable onPress={decrementar} style={styles.btnQtd}>
-                        <Text style={styles.btnQtdText}>-</Text>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={{width:"100%"}}
+            >
+                <SafeAreaView style={styles.container}>
+                <View style={styles.cardImg}>
+                    <Text style={[styles.inputLabel, { textAlign: 'center' }]}>Foto do medicamento</Text>
+                    <Pressable onPress={handleChooseImage} style={styles.cardAdcImg}>
+                        <Image
+                            source={imageUri ? { uri: imageUri } : { uri: 'https://icon-library.com/images/pill-icon-png/pill-icon-png-0.jpg' }}
+                            style={styles.previewImage}
+                        />
                     </Pressable>
-
-                    <TextInput
-                        style={[styles.input, styles.inputQtd]}
-                        value={quantidadeRemedio}
-                        onChangeText={(text) => {
-                            const cleaned = text.replace(/[^0-9]/g, '');
-                            setQuantidadeRemedio(cleaned === '' ? '0' : cleaned);
-                        }}
-                        keyboardType="numeric"
-                    />
-
-                    <Pressable onPress={incrementar} style={styles.btnQtd}>
-                        <Text style={styles.btnQtdText}>+</Text>
-                    </Pressable>
-
-                    <DropdownComponent
-                        onSelect={(value) => setUniMedidaRemedio(value)}
-                        selectedValue={uniMedidaRemedio}  // Passe o valor atual para o dropdown
-                    />
                 </View>
-            </View>
 
-            <View style={{ width: '100%' }}>
-                <Text style={styles.inputLabel}>Tipo de medicação</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollContainer}>
-                    {tiposMedicacao.map((item) => (
-                        <Pressable
-                            key={item.id}
-                            style={[styles.iconBox, tipoRemedio === item.id && styles.iconBoxSelecionado]}
-                            onPress={() => setTipoRemedio(item.id)}
-                        >
-                            <Fontisto name={item.icon} size={30} color={'green'} />
+                <View style={{ width: '100%' }}>
+                    <Text style={styles.inputLabel}>Nome do medicamento</Text>
+                    <TextInput style={styles.input} value={nomeRemedio} onChangeText={setNomeRemedio} />
+                </View>
+
+                <View style={{ width: '100%' }}>
+                    <Text style={styles.inputLabel}>Quantidade do medicamento</Text>
+                    <View style={[styles.rowInputs, { alignItems: 'center' }]}>
+                        <Pressable onPress={decrementar} style={styles.btnQtd}>
+                            <Text style={styles.btnQtdText}>-</Text>
                         </Pressable>
-                    ))}
-                </ScrollView>
-            </View>
 
-            <View style={{ width: '100%' }}>
-                <MultiSelect style={styles.input} selectedItems={selectedTimes} setSelectedItems={setSelectedTimes} />
-            </View>
+                        <TextInput
+                            style={[styles.input, styles.inputQtd]}
+                            value={quantidadeRemedio}
+                            onChangeText={(text) => {
+                                const cleaned = text.replace(/[^0-9]/g, '');
+                                setQuantidadeRemedio(cleaned === '' ? '0' : cleaned);
+                            }}
+                            keyboardType="numeric"
+                        />
 
-            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 5 }}>
-                <View style={[styles.rowInputs, { width: '100%' }]}>
-                    <View style={{ width: '49%' }}>
-                        <Text style={styles.inputLabel}>Duração (em dias)</Text>
-                        <View style={[styles.rowInputs, { alignItems: 'center' }, styles.input]}>
-                            <MaterialCommunityIcons style={{ width: '25%' }} name='chart-line-variant' size={30} color={'green'} />
-                            <TextInput
-                                style={{ width: '75%', outlineStyle: 'none' }}
-                                placeholder="Ex: 7 dias"
-                                value={duracaoRemedio}
-                                onChangeText={(text) => {
-                                    const cleaned = text.replace(/[^0-9]/g, '');
-                                    setDuracaoRemedio(cleaned.slice(0, 4));
-                                }}
-                                keyboardType="numeric"
-                            />
-                        </View>
-                        {duracaoRemedio ? (
-                            <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>
-                                {formatarDuracao(duracaoRemedio)}
-                            </Text>
-                        ) : null}
-                    </View>
+                        <Pressable onPress={incrementar} style={styles.btnQtd}>
+                            <Text style={styles.btnQtdText}>+</Text>
+                        </Pressable>
 
-                    <View style={{ width: '49%' }}>
-                        <Text style={styles.inputLabel}>Frequência (em horas)</Text>
-                        <View style={[styles.rowInputs, { alignItems: 'center' }, styles.input]}>
-                            <MaterialCommunityIcons style={{ width: '25%' }} name='clock-alert-outline' color={'green'} size={30} />
-                            <TextInput
-                                style={{ width: '75%', outlineStyle: 'none' }}
-                                placeholder="Ex: 8 horas"
-                                value={frequenciaRemedio}
-                                onChangeText={(text) => {
-                                    const cleaned = text.replace(/[^0-9]/g, '');
-                                    setFrequenciaRemedio(cleaned.slice(0, 3));
-                                }}
-                                keyboardType="numeric"
-                            />
-                        </View>
-                        {frequenciaRemedio ? (
-                            <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>
-                                {formatarFrequencia(frequenciaRemedio)}
-                            </Text>
-                        ) : null}
+                        <DropdownComponent
+                            onSelect={(value) => setUniMedidaRemedio(value)}
+                            selectedValue={uniMedidaRemedio}  // Passe o valor atual para o dropdown
+                        />
                     </View>
                 </View>
-            </View>
 
-            <TouchableOpacity style={styles.btnEnviar} onPress={enviarParaAPI}>
-                <Text style={styles.textoBtn}>
-                    {remedioParaEditar ? 'Atualizar' : 'Enviar'}
-                </Text>
-            </TouchableOpacity>
-        </SafeAreaView>
+                <View style={{ width: '100%' }}>
+                    <Text style={styles.inputLabel}>Tipo de medicação</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollContainer}>
+                        {tiposMedicacao.map((item) => (
+                            <Pressable
+                                key={item.id}
+                                style={[styles.iconBox, tipoRemedio === item.id && styles.iconBoxSelecionado]}
+                                onPress={() => setTipoRemedio(item.id)}
+                            >
+                                <Fontisto name={item.icon} size={30} color={'green'} />
+                            </Pressable>
+                        ))}
+                    </ScrollView>
+                </View>
+
+                <View style={{ width: '100%' }}>
+                    <MultiSelect style={styles.input} selectedItems={selectedTimes} setSelectedItems={setSelectedTimes} />
+                </View>
+
+                <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', marginBottom: 5 }}>
+                    <View style={[styles.rowInputs, { width: '100%' }]}>
+                        <View style={{ width: '49%' }}>
+                            <Text style={styles.inputLabel}>Duração (em dias)</Text>
+                            <View style={[styles.rowInputs, { alignItems: 'center' }, styles.input]}>
+                                <MaterialCommunityIcons style={{ width: '25%' }} name='chart-line-variant' size={30} color={'green'} />
+                                <TextInput
+                                    style={{ width: '75%', outlineStyle: 'none' }}
+                                    placeholder="Ex: 7 dias"
+                                    value={duracaoRemedio}
+                                    onChangeText={(text) => {
+                                        const cleaned = text.replace(/[^0-9]/g, '');
+                                        setDuracaoRemedio(cleaned.slice(0, 4));
+                                    }}
+                                    keyboardType="numeric"
+                                />
+                            </View>
+                            {duracaoRemedio ? (
+                                <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>
+                                    {formatarDuracao(duracaoRemedio)}
+                                </Text>
+                            ) : null}
+                        </View>
+
+                        <View style={{ width: '49%' }}>
+                            <Text style={styles.inputLabel}>Frequência (em horas)</Text>
+                            <View style={[styles.rowInputs, { alignItems: 'center' }, styles.input]}>
+                                <MaterialCommunityIcons style={{ width: '25%' }} name='clock-alert-outline' color={'green'} size={30} />
+                                <TextInput
+                                    style={{ width: '75%', outlineStyle: 'none' }}
+                                    placeholder="Ex: 8 horas"
+                                    value={frequenciaRemedio}
+                                    onChangeText={(text) => {
+                                        const cleaned = text.replace(/[^0-9]/g, '');
+                                        setFrequenciaRemedio(cleaned.slice(0, 3));
+                                    }}
+                                    keyboardType="numeric"
+                                />
+                            </View>
+                            {frequenciaRemedio ? (
+                                <Text style={{ fontSize: 10, marginTop: 4, textAlign: 'center' }}>
+                                    {formatarFrequencia(frequenciaRemedio)}
+                                </Text>
+                            ) : null}
+                        </View>
+                    </View>
+                </View>
+
+                <TouchableOpacity style={styles.btnEnviar} onPress={enviarParaAPI}>
+                    <Text style={styles.textoBtn}>
+                        {remedioParaEditar ? 'Atualizar' : 'Enviar'}
+                    </Text>
+                </TouchableOpacity>
+                </SafeAreaView>
+            </ScrollView>
     );
 }
 
