@@ -1,11 +1,74 @@
-import React from "react";
-import { Text, StyleSheet, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Text, StyleSheet, TouchableOpacity, View, ActivityIndicator } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import { Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Header({ title }) {
     const navigation = useNavigation();
+    const [foto, setFoto] = useState(null);
+    const [usuarioLogado, setUsuarioLogado] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function carregarUsuario() {
+            try {
+                setLoading(true);
+                const dados = await AsyncStorage.getItem('usuario');
+
+                // More robust check for undefined/null/empty
+                if (dados && dados !== 'undefined' && dados !== 'null' && dados.trim() !== '') {
+                    try {
+                        const usuario = JSON.parse(dados);
+                        
+                        // Validate the user object structure
+                        if (usuario && typeof usuario === 'object') {
+                            console.log('Usuário logado:', usuario);
+                            setUsuarioLogado(usuario);
+                            
+                            // Check if foto exists and is a string
+                            if (usuario.fotoUsuario && typeof usuario.fotoUsuario === 'string') {
+                                // Se for base64, use diretamente
+                                const isBase64 = usuario.fotoUsuario.startsWith('/') || usuario.fotoUsuario.length > 100;
+
+                                const imageUri = isBase64
+                                    ? `data:image/jpeg;base64,${usuario.fotoUsuario}`
+                                    : `http://127.0.0.1:8081/img/fotoUsuario/${usuario.fotoUsuario}`;
+
+                                setFoto(imageUri);
+                                }
+                        }
+                    } catch (parseError) {
+                        console.error('Erro ao parsear usuário:', parseError);
+                        await AsyncStorage.removeItem('usuario'); // Clean corrupted data
+                    }
+                }
+            } catch (erro) {
+                console.error('Erro ao carregar usuário:', erro);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        carregarUsuario();
+
+        // Listen for focus events to refresh user data
+        const unsubscribe = navigation.addListener('focus', () => {
+            carregarUsuario();
+        });
+
+        return unsubscribe;
+    }, [navigation]);
+
+    if (loading) {
+        return (
+            <View style={[styles.header, { justifyContent: 'center' }]}>
+                <ActivityIndicator size="small" color="green" />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.header}>
@@ -15,15 +78,33 @@ export default function Header({ title }) {
 
             <Text style={styles.textoHeader}>{title}</Text>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Registro')}>
-                <AntDesign
-                    style={{ borderRadius: 50, borderColor: 'green', borderWidth: 3 }}
-                    name="user"
-                    size={35}
-                    color="green"
-                />
+            <TouchableOpacity
+                onPress={() => {
+                    if (usuarioLogado) {
+                        navigation.navigate('infoUser', { usuario: usuarioLogado });
+                    } else {
+                        navigation.navigate('Registro');
+                    }
+                }}
+            >
+                {foto ? (
+                    <Image
+                        source={{ uri: foto }}
+                        style={styles.fotoPerfil}
+                        onError={(e) => {
+                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
+                            setFoto(null);
+                        }}
+                    />
+                ) : (
+                    <AntDesign
+                        style={styles.placeholderIcon}
+                        name="user"
+                        size={35}
+                        color="green"
+                    />
+                )}
             </TouchableOpacity>
-
         </View>
     );
 }
@@ -31,21 +112,32 @@ export default function Header({ title }) {
 const styles = StyleSheet.create({
     header: {
         width: '100%',
-        height: '100%',
+        height: 60,
         flexDirection: 'row',
         alignItems: 'center',
-        width:'100%',
-        height:60,
         justifyContent: 'space-between',
         paddingHorizontal: 15,
-        backgroundColor:'white',
-        borderWidth:2,
-        borderColor:'#CEd4d3'
+        backgroundColor: 'white',
+        borderBottomWidth: 2,
+        borderColor: '#CEd4d3'
     },
     textoHeader: {
         fontWeight: 'bold',
         fontSize: 20,
         color: '#000',
         letterSpacing: 1
+    },
+    fotoPerfil: {
+        width: 50,
+        height: 50,
+        borderRadius: 50,
+        borderWidth: 2,
+        borderColor: 'green'
+    },
+    placeholderIcon: {
+        borderRadius: 50,
+        borderColor: 'green',
+        borderWidth: 2,
+        padding: 2
     }
 });

@@ -20,13 +20,17 @@ import Remedio from '../pages/Remedios';
 import FazerRegistroDiabete from '../pages/Diabetes/fazerRegistroDiabete';
 import Pressao from '../pages/Pressão';
 import FazerRegistroPressao from '../pages/Pressão/fazerRegistroPressao';
+import infoUser from '../pages/Login';
+import Splash from '../pages/Splash/splash';
 const Drawer = createDrawerNavigator();
 
 export default function App() {
   return (
     <NavigationContainer >
-      <Drawer.Navigator screenOptions={{headerLeft:()=> null, }} > 
-       <Drawer.Screen  name='Home' component={Home} options={{header:()=> <Header title='Home' />}} />
+      <Drawer.Navigator initialRouteName="Splash">
+        <Drawer.Screen name="Splash" component={Splash} options={{ headerShown: false, drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen  name='infoUser' component={infoUser} options={{header:()=> <Header title='Informações do perfil'/>, drawerItemStyle: { display: 'none' },  }} />
+        <Drawer.Screen  name='Home' component={Home} options={{header:()=> <Header title='Home' />}} />
         <Drawer.Screen name='Registro' component={Registro} options={{header:()=> <Header title='Registro'/>, drawerItemStyle: { display: 'none' },  }}  />
         <Drawer.Screen name='Login' component={Login} options={{header:()=> <Header title='Login'/>, drawerItemStyle: { display: 'none' },  }}  />
         <Drawer.Screen name='IMC' component={DigitarDadosImc} options={{header:()=> <Header title='IMC'/>}}  />

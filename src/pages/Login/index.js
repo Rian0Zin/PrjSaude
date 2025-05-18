@@ -15,6 +15,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { CommonActions } from '@react-navigation/native';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/Feather';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const api = axios.create({
   baseURL: 'http://127.0.0.1:8081/api',
@@ -149,44 +150,58 @@ export default function Registro({ navigation }) {
     }   
 
     // Preparar dados para a API
-    const dados = {
-      nomeUsuario: nomeUsuario,
-      emailUsuario: emailUsuario,
-      senhaUsuario: senhaUsuario,
+     const dados = {
+      nomeUsuario,
+      emailUsuario,
+      senhaUsuario,
       idadeUsuario: idade,
       alturaUsuario: altura,
       pesoUsuario: peso,
-      fotoBase64: fotoBase64,
+      fotoUsuario: fotoBase64, // <-- use esse nome aqui
     };
 
-    console.log('Dados enviados:', JSON.stringify(dados, null, 2));
+    console.log('Dados a serem enviados:', dados); // Verifique no console
 
     try {
-      const response = await api.post('/usuario', dados);
+        const response = await api.post('/usuario', dados, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            transformRequest: [(data) => JSON.stringify(data)] // Força stringify
+        });
+        
+        console.log('Resposta completa:', response); // Verifique a resposta
+        try {
+          await AsyncStorage.setItem('usuario', JSON.stringify({
+            nomeUsuario,
+            emailUsuario,
+            idadeUsuario: idade,
+            alturaUsuario: altura,
+            pesoUsuario: peso,
+            imageUri,
+          }));
 
-      // Navegação com reset
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-        })
-      );
+          console.log('Usuário salvo localmente no AsyncStorage');
+        } catch (erro) {
+          console.error('Erro ao salvar no AsyncStorage:', erro);
+        }
 
-      Alert.alert('Sucesso', 'Cadastro concluído! Faça login para continuar.');
+        // Redirecionar para a Home
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Home' }],
+          })
+        );
     } catch (error) {
-      console.error('Erro completo:', error);
-      console.error('Resposta do erro:', error.response?.data);
-
-      let errorMessage = 'Falha ao enviar os dados.';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      }
-
-      Alert.alert('Erro', errorMessage);
-    }
+        console.error('Detalhes do erro:', {
+            request: error.config,
+            response: error.response?.data,
+            message: error.message
+        });
   };
+}
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>

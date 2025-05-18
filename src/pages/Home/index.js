@@ -1,9 +1,39 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity } from "react-native";
+import react,{useEffect,useState} from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Home({navigation}) {
+const [usuario, setUsuario] = useState(null);
+
+  useEffect(() => {
+    async function carregarUsuario() {
+      try {
+        const dados = await AsyncStorage.getItem('usuario');
+        if (dados) {
+          const usuarioParse = JSON.parse(dados);
+          setUsuario(usuarioParse);
+        } else {
+          console.log('Nenhum usuário encontrado');
+        }
+      } catch (erro) {
+        console.error('Erro ao carregar do AsyncStorage:', erro);
+      }
+    }
+
+    carregarUsuario();
+  }, []);
+  
+
   return (
     <View style={styles.container}>
+          <>
+      {usuario ? (
+        <Text>Bem-vindo, {usuario.nomeUsuario}</Text>
+      ) : (
+        <Text>Carregando usuário...</Text>
+      )}
+    </>
       <View style={{flex:0.6}}>
         <View style={{flex:0.9, justifyContent:'center', alignItems:'center',padding:20}}>
           <Image style={{width:'100%', height:'100%', resizeMode:'contain'}} source={{uri:'https://static.vecteezy.com/system/resources/previews/015/693/459/large_2x/healthy-lifestyle-habits-free-png.png'}}/>
