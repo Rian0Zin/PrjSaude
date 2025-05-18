@@ -387,7 +387,7 @@ export default function Registro({ navigation, route }) {
         {!usuarioParaEditar && (
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Já tem uma conta?
-              <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}> Faça login</Text>
+              <Text style={styles.loginLink} onPress={() => navigation.navigate('LoginReal')}> Faça login</Text>
             </Text>
           </View>
         )}

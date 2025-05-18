@@ -1,78 +1,76 @@
 import React, { useEffect, useState } from "react";
-import { Text, StyleSheet, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { StyleSheet, TouchableOpacity, View, ActivityIndicator, Text } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CommonActions } from '@react-navigation/native';
 
 export default function Header({ title }) {
     const navigation = useNavigation();
     const [foto, setFoto] = useState(null);
     const [usuarioLogado, setUsuarioLogado] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [logoutLoading, setLogoutLoading] = useState(false);
+
+    const carregarUsuario = async () => {
+        try {
+            const dadosUsuario = await AsyncStorage.getItem('usuario');
+            
+            if (dadosUsuario) {
+                const usuario = JSON.parse(dadosUsuario);
+                setUsuarioLogado(usuario);
+                usuario.fotoUsuario && setFoto(`http://127.0.0.1:8081/img/fotoUsuario/${usuario.fotoUsuario}`);
+            } else {
+                setUsuarioLogado(null);
+                setFoto(null);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar usuário:', error);
+            await AsyncStorage.removeItem('usuario');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        async function carregarUsuario() {
-            try {
-                setLoading(true);
-                const dados = await AsyncStorage.getItem('usuario');
-                
-                // More robust check for undefined/null/empty
-                if (dados && dados !== 'undefined' && dados !== 'null' && dados.trim() !== '') {
-                    try {
-                        const usuario = JSON.parse(dados);
-                        
-                        // Validate the user object structure
-                        if (usuario && typeof usuario === 'object') {
-                            console.log('Usuário logado:', usuario);
-                            setUsuarioLogado(usuario);
-                            
-                            // Check if foto exists and is a string
-                            if (usuario?.fotoUsuario) {
-                                setFoto(`http://127.0.0.1:8081/img/fotoUsuario/${usuario.fotoUsuario}`);
-                            }
-                        }
-                    } catch (parseError) {
-                        console.error('Erro ao parsear usuário:', parseError);
-                        await AsyncStorage.removeItem('usuario'); // Clean corrupted data
-                    }
-                }
-            } catch (erro) {
-                console.error('Erro ao carregar usuário:', erro);
-            } finally {
-                setLoading(false);
-            }
-        }
-
         carregarUsuario();
-
-        // Listen for focus events to refresh user data
-        const unsubscribe = navigation.addListener('focus', () => {
-            carregarUsuario();
-        });
-
+        const unsubscribe = navigation.addListener('focus', carregarUsuario);
         return unsubscribe;
     }, [navigation]);
 
-    const handlePerfilPress = () => {
-        if (usuarioLogado) {
-            // Navega para a tela de edição passando o usuário como parâmetro
-            navigation.navigate('Registro', { 
-                usuarioParaEditar: usuarioLogado,
-                // Adiciona um callback para atualizar a foto após edição
-                onGoBack: () => carregarUsuario()
-            });
-        } else {
-            // Navega para a tela de registro normal
-            navigation.navigate('Registro');
+    const handleLogout = async () => {
+        try {
+            setLogoutLoading(true);
+            
+            await AsyncStorage.clear();
+            
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'Login' }],
+                })
+            );
+            
+        } catch (error) {
+            console.error('Erro no logout:', error);
+        } finally {
+            setLogoutLoading(false);
         }
+    };
+
+    const handlePerfilPress = () => {
+        navigation.navigate(usuarioLogado ? 'Registro' : 'Login', {
+            usuarioParaEditar: usuarioLogado,
+            onGoBack: carregarUsuario
+        });
     };
 
     if (loading) {
         return (
-            <View style={[styles.header, { justifyContent: 'center' }]}>
-                <ActivityIndicator size="small" color="green" />
+            <View style={[styles.header, styles.loadingContainer]}>
+                <ActivityIndicator size="small" color="#4CAF50" />
             </View>
         );
     }
@@ -80,30 +78,43 @@ export default function Header({ title }) {
     return (
         <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.openDrawer()}>
-                <FontAwesome6 name="bars" size={30} color="green" />
+                <FontAwesome6 name="bars" size={24} color="#4CAF50" />
             </TouchableOpacity>
 
-            <Text style={styles.textoHeader}>{title}</Text>
+            <Text style={styles.title}>{title}</Text>
 
-            <TouchableOpacity onPress={handlePerfilPress}>
-                {foto ? (
-                    <Image
-                        source={{ uri: foto }}
-                        style={styles.fotoPerfil}
-                        onError={(e) => {
-                            console.log('Erro ao carregar imagem:', e.nativeEvent.error);
-                            setFoto(null);
-                        }}
-                    />
-                ) : (
-                    <AntDesign
-                        style={styles.placeholderIcon}
-                        name="user"
-                        size={35}
-                        color="green"
-                    />
+            <View style={styles.rightContainer}>
+                {usuarioLogado && (
+                    <TouchableOpacity 
+                        onPress={handleLogout}
+                        style={styles.logoutButton}
+                        disabled={logoutLoading}
+                    >
+                        {logoutLoading ? (
+                            <ActivityIndicator size="small" color="#4CAF50" />
+                        ) : (
+                            <FontAwesome6 name="door-open" size={24} color="#4CAF50" />
+                        )}
+                    </TouchableOpacity>
                 )}
-            </TouchableOpacity>
+                
+                <TouchableOpacity onPress={handlePerfilPress}>
+                    {foto ? (
+                        <Image
+                            source={{ uri: foto }}
+                            style={styles.profileImage}
+                            onError={() => setFoto(null)}
+                        />
+                    ) : (
+                        <AntDesign
+                            name="user"
+                            size={24}
+                            color="#4CAF50"
+                            style={styles.profilePlaceholder}
+                        />
+                    )}
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -116,27 +127,42 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 15,
-        backgroundColor: 'white',
-        borderBottomWidth: 2,
-        borderColor: '#CEd4d3'
+        backgroundColor: '#ffffff',
+        borderBottomWidth: 1,
+        borderColor: '#e0e0e0',
+        elevation: 2,
     },
-    textoHeader: {
-        fontWeight: 'bold',
-        fontSize: 20,
-        color: '#000',
-        letterSpacing: 1
+    loadingContainer: {
+        justifyContent: 'center',
     },
-    fotoPerfil: {
-        width: 50,
-        height: 50,
-        borderRadius: 50,
-        borderWidth: 2,
-        borderColor: 'green'
+    title: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#333',
+        flex: 1,
+        textAlign: 'center',
+        marginHorizontal: 10,
     },
-    placeholderIcon: {
-        borderRadius: 50,
-        borderColor: 'green',
-        borderWidth: 2,
-        padding: 2
-    }
+    rightContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 15,
+    },
+    logoutButton: {
+        padding: 6,
+    },
+    profileImage: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#4CAF50',
+    },
+    profilePlaceholder: {
+        backgroundColor: '#f5f5f5',
+        borderRadius: 20,
+        padding: 8,
+        borderWidth: 1,
+        borderColor: '#4CAF50',
+    },
 });

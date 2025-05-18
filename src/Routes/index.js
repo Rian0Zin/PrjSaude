@@ -15,12 +15,14 @@ import Vacinas from '../pages/Vacinas';
 import Diabetes from '../pages/Diabetes';
 import Login from '../pages/Login';
 import Registro from '../pages/Login';
+import LoginReal from '../pages/Login/login';
 import DigitarDadosRemedio from '../pages/Remedios/digitarDadosRemedio';
 import Remedio from '../pages/Remedios';
 import FazerRegistroDiabete from '../pages/Diabetes/fazerRegistroDiabete';
 import Pressao from '../pages/Pressão';
 import FazerRegistroPressao from '../pages/Pressão/fazerRegistroPressao';
 import Splash from '../pages/Splash/splash';
+
 const Drawer = createDrawerNavigator();
 
 export default function App() {
@@ -43,7 +45,7 @@ export default function App() {
         <Drawer.Screen name='Digitar diabete' component={FazerRegistroDiabete}  options={{header:()=> <Header title='Diabetes'/>, drawerItemStyle:{display:'none'}}}/>
         <Drawer.Screen name='Pressão' component={Pressao} options={{header:()=> <Header title='Pressão'/>}}/>
         <Drawer.Screen name='Digitar pressão' component={FazerRegistroPressao} options={{header:()=> <Header title='Pressão'/>, drawerItemStyle:{display:'none'}}}/>
-
+        <Drawer.Screen name='LoginReal' component={LoginReal} options={{header:()=> <Header title='Login'/>, drawerItemStyle: { display: 'none' },  }}  />
       </Drawer.Navigator>
     </NavigationContainer>
   );
