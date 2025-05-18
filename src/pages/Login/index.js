@@ -9,6 +9,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -37,6 +38,7 @@ export default function Registro({ navigation, route }) {
   const [pesoUsuario, setPesoUsuario] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [idUsuario, setIdUsuario] = useState(null);
+  const [excluindo, setExcluindo] = useState(false);
   const [errosFormulario, setErrosFormulario] = useState({
     nome: '',
     email: '',
@@ -260,6 +262,77 @@ export default function Registro({ navigation, route }) {
     }
   };
 
+  const [showConfirmacaoExclusao, setShowConfirmacaoExclusao] = useState(false);
+
+// Função de exclusão modificada
+const handleExcluirConta = async () => {
+  try {
+    if (!idUsuario) return;
+
+    setExcluindo(true);
+    
+    const response = await api.delete(`/usuario/${idUsuario}`);
+    
+    if (response.data.sucesso) {
+      await AsyncStorage.removeItem('usuario');
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'LoginReal' }],
+        })
+      );
+    }
+  } catch (error) {
+    console.error('Erro ao excluir conta:', error);
+  } finally {
+    setExcluindo(false);
+    setShowConfirmacaoExclusao(false);
+  }
+};
+
+// Adicione este componente de confirmação no JSX (antes do último </ScrollView>)
+{usuarioParaEditar && (
+  <>
+    <TouchableOpacity 
+      style={[styles.btnEnviar, styles.btnExcluir]} 
+      onPress={() => setShowConfirmacaoExclusao(true)}
+    >
+      <Text style={styles.btnText}>EXCLUIR CONTA</Text>
+    </TouchableOpacity>
+
+    {/* Modal de Confirmação */}
+    {showConfirmacaoExclusao && (
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Confirmação</Text>
+          <Text style={styles.modalText}>Tem certeza que deseja excluir sua conta permanentemente?</Text>
+          
+          <View style={styles.modalButtons}>
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.modalButtonCancel]}
+              onPress={() => setShowConfirmacaoExclusao(false)}
+            >
+              <Text style={styles.modalButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.modalButtonConfirm]}
+              onPress={handleExcluirConta}
+              disabled={excluindo}
+            >
+              {excluindo ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.modalButtonText}>Excluir</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    )}
+  </>
+)}
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <SafeAreaView style={styles.container}>
@@ -391,6 +464,19 @@ export default function Registro({ navigation, route }) {
             </Text>
           </View>
         )}
+        {usuarioParaEditar && (
+           <TouchableOpacity 
+             style={[styles.btnEnviar, styles.btnExcluir]} 
+             onPress={handleExcluirConta}
+             disabled={excluindo}
+           >
+             {excluindo ? (
+               <ActivityIndicator color="#fff" />
+             ) : (
+               <Text style={styles.btnText}>EXCLUIR CONTA</Text>
+             )}
+           </TouchableOpacity>
+         )}
       </SafeAreaView>
     </ScrollView>
   );
@@ -495,5 +581,60 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 12,
     marginTop: 5,
+  },
+  btnExcluir: {
+  backgroundColor: '#dc3545',
+   marginTop: 10,
+ },
+ btnExcluir: {
+    backgroundColor: '#dc3545',
+    marginTop: 10,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    color: '#666',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonCancel: {
+    backgroundColor: '#6c757d',
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#dc3545',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
