@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { CommonActions } from '@react-navigation/native';
 import axios from 'axios';
@@ -24,7 +24,10 @@ const api = axios.create({
   },
 });
 
-export default function Registro({ navigation }) {
+export default function Registro({ navigation, route }) {
+  const { usuarioParaEditar } = route.params || {};
+  
+  // Estados
   const [imageUri, setImageUri] = useState('https://static.vecteezy.com/system/resources/previews/019/879/186/original/user-icon-on-transparent-background-free-png.png');
   const [nomeUsuario, setNomeUsuario] = useState('');
   const [emailUsuario, setEmailUsuario] = useState('');
@@ -33,6 +36,7 @@ export default function Registro({ navigation }) {
   const [alturaUsuario, setAlturaUsuario] = useState('');
   const [pesoUsuario, setPesoUsuario] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [idUsuario, setIdUsuario] = useState(null);
   const [errosFormulario, setErrosFormulario] = useState({
     nome: '',
     email: '',
@@ -43,10 +47,33 @@ export default function Registro({ navigation }) {
   });
   const [erroEmail, setErroEmail] = useState('');
 
-  // Função para verificar email existente
+  // Carregar dados do usuário se estiver editando
+  useEffect(() => {
+    if (usuarioParaEditar) {
+      setImageUri(usuarioParaEditar.fotoUsuario 
+        ? `http://127.0.0.1:8081/img/fotoUsuario/${usuarioParaEditar.fotoUsuario}`
+        : 'https://static.vecteezy.com/system/resources/previews/019/879/186/original/user-icon-on-transparent-background-free-png.png');
+      setNomeUsuario(usuarioParaEditar.nomeUsuario || '');
+      setEmailUsuario(usuarioParaEditar.emailUsuario || '');
+      setIdadeUsuario(usuarioParaEditar.idadeUsuario?.toString() || '');
+      setAlturaUsuario(usuarioParaEditar.alturaUsuario?.toString() || '');
+      setPesoUsuario(usuarioParaEditar.pesoUsuario?.toString() || '');
+      setIdUsuario(usuarioParaEditar.idUsuario || null);
+      
+      navigation.setOptions({
+        title: 'Editar Perfil'
+      });
+    } else {
+      navigation.setOptions({
+        title: 'Cadastro'
+      });
+    }
+  }, [route.params?.usuarioParaEditar]);
+
+  // Função para verificar email existente (exceto para o próprio usuário em edição)
   async function verificarEmailExistente(email) {
     try {
-      const resposta = await api.get(`/verificar-email?email=${email}`);
+      const resposta = await api.get(`/verificar-email?email=${email}${idUsuario ? `&idUsuario=${idUsuario}` : ''}`);
       return resposta.data.existe;
     } catch (erro) {
       console.error('Erro ao verificar email:', erro);
@@ -65,21 +92,21 @@ export default function Registro({ navigation }) {
     const erros = {
       nome: !nomeUsuario.trim() ? 'Nome completo é obrigatório' : '',
       email: !emailUsuario.trim() ? 'Email é obrigatório' : !validarEmail(emailUsuario) ? 'Email inválido' : '',
-      senha: !senhaUsuario.trim() ? 'Senha é obrigatória' : '',
+      senha: !usuarioParaEditar && !senhaUsuario.trim() ? 'Senha é obrigatória' : '',
       idade: !idadeUsuario.trim() ? 'Idade é obrigatória' : isNaN(parseInt(idadeUsuario)) ? 'Idade deve ser um número' : '',
       altura: !alturaUsuario.trim() ? 'Altura é obrigatória' : isNaN(parseFloat(alturaUsuario)) ? 'Altura deve ser um número' : '',
       peso: !pesoUsuario.trim() ? 'Peso é obrigatório' : isNaN(parseFloat(pesoUsuario)) ? 'Peso deve ser um número' : ''
     };
-  
+
     if (erroEmail) erros.email = erroEmail;
-  
+
     setErrosFormulario(erros);
     return !Object.values(erros).some(erro => erro !== '');
   }
 
   async function MudancaEmail(texto) {
     setEmailUsuario(texto);
-    
+
     if (texto.trim().length > 0) {
       if (!validarEmail(texto)) {
         setErroEmail('Email inválido');
@@ -114,13 +141,16 @@ export default function Registro({ navigation }) {
 
   const handleEnviar = async () => {
     if (!validarFormulario()) {
-        return;
+      return;
     }
 
-    const emailExiste = await verificarEmailExistente(emailUsuario);
-    if (emailExiste) {
+    // Se for edição, não precisa verificar email novamente
+    if (!usuarioParaEditar) {
+      const emailExiste = await verificarEmailExistente(emailUsuario);
+      if (emailExiste) {
         Alert.alert('Cadastro não realizado', 'Este email já está cadastrado!');
         return;
+      }
     }
 
     const idade = parseInt(idadeUsuario);
@@ -128,67 +158,98 @@ export default function Registro({ navigation }) {
     const peso = parseFloat(pesoUsuario);
 
     let fotoBase64 = null;
-    if (imageUri && !imageUri.startsWith('http')) {
-        try {
-            const response = await fetch(imageUri);
-            const blob = await response.blob();
-            fotoBase64 = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        } catch (error) {
-            console.error('Erro na conversão da imagem:', error);
-            Alert.alert('Erro', 'Falha ao processar a imagem');
-            return;
-        }
+    if (imageUri && !imageUri.startsWith('http://127.0.0.1:8081')) {
+      try {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        fotoBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (error) {
+        console.error('Erro na conversão da imagem:', error);
+        Alert.alert('Erro', 'Falha ao processar a imagem');
+        return;
+      }
     }
 
     const dados = {
-        nomeUsuario,
-        emailUsuario,
-        senhaUsuario,
-        idadeUsuario: idade,
-        alturaUsuario: altura,
-        pesoUsuario: peso,
-        fotoBase64: fotoBase64 || null,
+      nomeUsuario,
+      emailUsuario,
+      ...(!usuarioParaEditar && { senhaUsuario }),
+      idadeUsuario: idade,
+      alturaUsuario: altura,
+      pesoUsuario: peso,
+      fotoBase64: fotoBase64 || null,
+      ...(usuarioParaEditar && { fotoUsuario: usuarioParaEditar.fotoUsuario })
     };
 
     try {
-        // DECLARE config AQUI!
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        };
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      };
 
-        const response = await api.post('/usuario', dados, config);
-        
-        const usuarioParaSalvar = {
-            nomeUsuario: response.data.usuario.nomeUsuario,
-            emailUsuario: response.data.usuario.emailUsuario,
-            idadeUsuario: response.data.usuario.idadeUsuario,
-            alturaUsuario: response.data.usuario.alturaUsuario,
-            pesoUsuario: response.data.usuario.pesoUsuario,
-            fotoUsuario: response.data.usuario.fotoUsuario
-        };
+      let response;
+      if (usuarioParaEditar) {
 
-        await AsyncStorage.setItem('usuario', JSON.stringify(usuarioParaSalvar));
-        navigation.dispatch(
-            CommonActions.reset({
-                index: 0,
-                routes: [{ name: 'Home' }],
-            })
-        );
+        response = await api.post(`/usuario/${idUsuario}`, dados, config);
+      } else {
+        // Criação
+        response = await api.post('/usuario', dados, config);
+      }
+
+      // Verificação da resposta de acordo com a estrutura real
+      if (!response.data || !response.data.data) {
+        throw new Error('Resposta da API inválida');
+      }
+
+      const usuarioResposta = response.data.data;
+      
+      const usuarioParaSalvar = {
+        idUsuario: usuarioResposta.idUsuario || idUsuario,
+        nomeUsuario: usuarioResposta.nomeUsuario || nomeUsuario,
+        emailUsuario: usuarioResposta.emailUsuario || emailUsuario,
+        idadeUsuario: usuarioResposta.idadeUsuario || idade,
+        alturaUsuario: usuarioResposta.alturaUsuario || altura,
+        pesoUsuario: usuarioResposta.pesoUsuario || peso,
+        fotoUsuario: usuarioResposta.fotoUsuario || (usuarioParaEditar?.fotoUsuario || null)
+      };
+
+      setIdUsuario(usuarioResposta.idUsuario || idUsuario);
+      
+      await AsyncStorage.setItem('usuario', JSON.stringify(usuarioParaSalvar));
+
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        })
+      );
 
     } catch (error) {
-        console.error('Erro completo:', error);
-        const errorMessage = error.response?.data?.message || 'Erro desconhecido';
-        Alert.alert('Erro', errorMessage);
+      console.error('Erro completo:', error);
+      let errorMessage = 'Erro desconhecido';
+      
+      if (error.response) {
+        // Mostra a mensagem da API ou o status
+        errorMessage = error.response.data?.mensagem || 
+                      error.response.data?.message ||
+                      error.response.statusText;
+      } else if (error.request) {
+        errorMessage = 'Sem resposta do servidor';
+      } else {
+        errorMessage = error.message || 'Erro ao processar a requisição';
+      }
+      
+      Alert.alert('Erro', errorMessage);
     }
-};
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <SafeAreaView style={styles.container}>
@@ -230,6 +291,7 @@ export default function Registro({ navigation }) {
               autoCapitalize="none"
               value={emailUsuario}
               onChangeText={MudancaEmail}
+              editable={!usuarioParaEditar} // Não permite editar email se estiver editando
             />
           </View>
           {(errosFormulario.email || erroEmail) ? (
@@ -237,31 +299,33 @@ export default function Registro({ navigation }) {
           ) : null}
         </View>
 
-        {/* Senha */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Senha</Text>
-          <View style={[styles.inputWrapper, errosFormulario.senha ? styles.inputError : null]}>
-            <Icon name="lock" size={18} color="#A0A0A0" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Crie uma senha segura"
-              secureTextEntry={!showPassword}
-              value={senhaUsuario}
-              onChangeText={setSenhaUsuario}
-            />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <Icon name={showPassword ? "eye" : "eye-off"} size={18} color="#A0A0A0" />
-            </TouchableOpacity>
+        {/* Senha - só mostra se for cadastro novo */}
+        {!usuarioParaEditar && (
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Senha</Text>
+            <View style={[styles.inputWrapper, errosFormulario.senha ? styles.inputError : null]}>
+              <Icon name="lock" size={18} color="#A0A0A0" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Crie uma senha segura"
+                secureTextEntry={!showPassword}
+                value={senhaUsuario}
+                onChangeText={setSenhaUsuario}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Icon name={showPassword ? "eye" : "eye-off"} size={18} color="#A0A0A0" />
+              </TouchableOpacity>
+            </View>
+            {errosFormulario.senha ? <Text style={styles.textoErro}>{errosFormulario.senha}</Text> : null}
           </View>
-          {errosFormulario.senha ? <Text style={styles.textoErro}>{errosFormulario.senha}</Text> : null}
-        </View>
+        )}
 
         {/* Dados Pessoais */}
         <View style={styles.row}>
-          <View style={[styles.inputContainer, { flex: 1, paddingHorizontal:0}]}>
+          <View style={[styles.inputContainer, { flex: 1, paddingHorizontal: 0 }]}>
             <Text style={styles.inputLabel}>Idade</Text>
             <View style={[styles.inputWrapper, errosFormulario.idade ? styles.inputError : null]}>
               <TextInput
@@ -275,7 +339,7 @@ export default function Registro({ navigation }) {
             {errosFormulario.idade ? <Text style={styles.textoErro}>{errosFormulario.idade}</Text> : null}
           </View>
 
-          <View style={[styles.inputContainer, { flex: 1, paddingHorizontal:0}]}>
+          <View style={[styles.inputContainer, { flex: 1, paddingHorizontal: 0 }]}>
             <Text style={styles.inputLabel}>Altura (m)</Text>
             <View style={[styles.inputWrapper, errosFormulario.altura ? styles.inputError : null]}>
               <TextInput
@@ -305,19 +369,22 @@ export default function Registro({ navigation }) {
         </View>
 
         <TouchableOpacity style={styles.btnEnviar} onPress={handleEnviar}>
-          <Text style={styles.btnText}>CADASTRAR</Text>
+          <Text style={styles.btnText}>
+            {usuarioParaEditar ? 'ATUALIZAR' : 'CADASTRAR'}
+          </Text>
         </TouchableOpacity>
 
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>Já tem uma conta? 
-            <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}> Faça login</Text>
-          </Text>
-        </View>
+        {!usuarioParaEditar && (
+          <View style={styles.loginContainer}>
+            <Text style={styles.loginText}>Já tem uma conta?
+              <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}> Faça login</Text>
+            </Text>
+          </View>
+        )}
       </SafeAreaView>
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
@@ -325,7 +392,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent:'center',
+    justifyContent: 'center',
     backgroundColor: '#fff',
   },
 
@@ -386,7 +453,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    gap:2
+    gap: 2
   },
   btnEnviar: {
     backgroundColor: '#32A017',

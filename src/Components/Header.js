@@ -17,9 +17,7 @@ export default function Header({ title }) {
             try {
                 setLoading(true);
                 const dados = await AsyncStorage.getItem('usuario');
-                const usuario = JSON.parse(dados);
-
-
+                
                 // More robust check for undefined/null/empty
                 if (dados && dados !== 'undefined' && dados !== 'null' && dados.trim() !== '') {
                     try {
@@ -32,8 +30,8 @@ export default function Header({ title }) {
                             
                             // Check if foto exists and is a string
                             if (usuario?.fotoUsuario) {
-    setFoto(`http://127.0.0.1:8081/img/fotoUsuario/${usuario.fotoUsuario}`);
-}
+                                setFoto(`http://127.0.0.1:8081/img/fotoUsuario/${usuario.fotoUsuario}`);
+                            }
                         }
                     } catch (parseError) {
                         console.error('Erro ao parsear usuário:', parseError);
@@ -57,6 +55,20 @@ export default function Header({ title }) {
         return unsubscribe;
     }, [navigation]);
 
+    const handlePerfilPress = () => {
+        if (usuarioLogado) {
+            // Navega para a tela de edição passando o usuário como parâmetro
+            navigation.navigate('Registro', { 
+                usuarioParaEditar: usuarioLogado,
+                // Adiciona um callback para atualizar a foto após edição
+                onGoBack: () => carregarUsuario()
+            });
+        } else {
+            // Navega para a tela de registro normal
+            navigation.navigate('Registro');
+        }
+    };
+
     if (loading) {
         return (
             <View style={[styles.header, { justifyContent: 'center' }]}>
@@ -73,15 +85,7 @@ export default function Header({ title }) {
 
             <Text style={styles.textoHeader}>{title}</Text>
 
-            <TouchableOpacity
-                onPress={() => {
-                    if (usuarioLogado) {
-                        navigation.navigate('infoUser', { usuario: usuarioLogado });
-                    } else {
-                        navigation.navigate('Registro');
-                    }
-                }}
-            >
+            <TouchableOpacity onPress={handlePerfilPress}>
                 {foto ? (
                     <Image
                         source={{ uri: foto }}
