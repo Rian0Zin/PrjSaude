@@ -4,10 +4,10 @@ import {
   StyleSheet,
   View,
   TextInput,
-  Pressable,
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useState } from 'react';
 import { CommonActions } from '@react-navigation/native';
@@ -26,100 +26,92 @@ export default function LoginReal({ navigation }) {
   const [emailUsuario, setEmailUsuario] = useState('');
   const [senhaUsuario, setSenhaUsuario] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errosFormulario, setErrosFormulario] = useState({
+  const [loading, setLoading] = useState(false);
+  const [erros, setErros] = useState({
     email: '',
     senha: ''
   });
 
-  // Validação de email básica
-  function validarEmail(email) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  }
-
-  // Valida todos os campos
-  function validarFormulario() {
-    const erros = {
-      email: !emailUsuario.trim() ? 'Email é obrigatório' : !validarEmail(emailUsuario) ? 'Email inválido' : '',
-      senha: !senhaUsuario.trim() ? 'Senha é obrigatória' : ''
+  const validarFormulario = () => {
+    const novosErros = {
+      email: !emailUsuario ? 'Email é obrigatório' : 
+        !/^\S+@\S+\.\S+$/.test(emailUsuario) ? 'Email inválido' : '',
+      senha: !senhaUsuario ? 'Senha é obrigatória' : ''
     };
-
-    setErrosFormulario(erros);
-    return !Object.values(erros).some(erro => erro !== '');
-  }
+    
+    setErros(novosErros);
+    return Object.values(novosErros).every(erro => !erro);
+  };
 
   const handleLogin = async () => {
-    if (!validarFormulario()) {
-      return;
-    }
+    if (!validarFormulario()) return;
 
+    setLoading(true);
     try {
-      const response = await api.post('/login', {
+      const { data } = await api.post('/login', {
         emailUsuario,
         senhaUsuario
       });
 
-      const usuario = response.data.usuario || response.data.data;
-      
-      await AsyncStorage.setItem('usuario', JSON.stringify(usuario));
-
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Home' }],
-        })
-      );
-
-    } catch (error) {
-      console.error('Erro no login:', error);
-      let errorMessage = 'Credenciais inválidas';
-      
-      if (error.response) {
-        errorMessage = error.response.data?.mensagem || 
-                      error.response.data?.message ||
-                      error.response.statusText;
+      if (data.sucesso) {
+        await AsyncStorage.setItem('usuario', JSON.stringify(data.usuario));
+        
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Home' }],
+          })
+        );
+      } else {
+        Alert.alert('Erro', data.mensagem || 'Falha no login');
       }
-      
-      Alert.alert('Erro', errorMessage);
+    } catch (error) {
+      const mensagem = error.response?.data?.mensagem || 
+                      error.message || 
+                      'Erro de conexão';
+      Alert.alert('Erro', mensagem);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
+    <ScrollView 
+      contentContainerStyle={styles.scrollContainer}
+      keyboardShouldPersistTaps="handled"
+    >
       <SafeAreaView style={styles.container}>
-        {/* Cabeçalho */}
         <View style={styles.header}>
-          <Text style={styles.titulo}>Bem-vindo de volta!</Text>
+          <Text style={styles.titulo}>Bem-vindo</Text>
           <Text style={styles.subtitulo}>Faça login para continuar</Text>
         </View>
 
-        {/* Formulário */}
-        <View style={styles.formContainer}>
-          {/* Email */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <View style={[styles.inputWrapper, errosFormulario.email ? styles.inputError : null]}>
-              <Icon name="mail" size={18} color="#A0A0A0" style={styles.inputIcon} />
+        <View style={styles.formulario}>
+          {/* Campo Email */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <View style={[styles.inputWrapper, erros.email && styles.inputError]}>
+              <Icon name="mail" size={18} color="#666" style={styles.icon} />
               <TextInput
                 style={styles.input}
-                placeholder="seu@email.com"
+                placeholder="exemplo@email.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={emailUsuario}
                 onChangeText={setEmailUsuario}
               />
             </View>
-            {errosFormulario.email ? <Text style={styles.textoErro}>{errosFormulario.email}</Text> : null}
+            {erros.email ? <Text style={styles.erroTexto}>{erros.email}</Text> : null}
           </View>
 
-          {/* Senha */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Senha</Text>
-            <View style={[styles.inputWrapper, errosFormulario.senha ? styles.inputError : null]}>
-              <Icon name="lock" size={18} color="#A0A0A0" style={styles.inputIcon} />
+          {/* Campo Senha */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Senha</Text>
+            <View style={[styles.inputWrapper, erros.senha && styles.inputError]}>
+              <Icon name="lock" size={18} color="#666" style={styles.icon} />
               <TextInput
                 style={styles.input}
-                placeholder="Digite sua senha"
+                placeholder="••••••••"
                 secureTextEntry={!showPassword}
                 value={senhaUsuario}
                 onChangeText={setSenhaUsuario}
@@ -128,21 +120,34 @@ export default function LoginReal({ navigation }) {
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
               >
-                <Icon name={showPassword ? "eye" : "eye-off"} size={18} color="#A0A0A0" />
+                <Icon 
+                  name={showPassword ? 'eye-off' : 'eye'} 
+                  size={18} 
+                  color="#666" 
+                />
               </TouchableOpacity>
             </View>
-            {errosFormulario.senha ? <Text style={styles.textoErro}>{errosFormulario.senha}</Text> : null}
-            <TouchableOpacity style={styles.btnLogin} onPress={handleLogin}>
-                <Text style={styles.btnText}>ENTRAR</Text>
-            </TouchableOpacity>
+            {erros.senha ? <Text style={styles.erroTexto}>{erros.senha}</Text> : null}
           </View>
 
+          {/* Botão de Login */}
+          <TouchableOpacity
+            style={[styles.botao, loading && styles.botaoDesativado]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.botaoTexto}>ENTRAR</Text>
+            )}
+          </TouchableOpacity>
 
-          {/* Link para Registro */}
+          {/* Link para Cadastro */}
           <View style={styles.registroContainer}>
-            <Text style={styles.registroText}>Não tem uma conta?</Text>
+            <Text style={styles.registroTexto}>Não tem conta? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Registro')}>
-              <Text style={styles.registroLink}> Criar conta</Text>
+              <Text style={styles.registroLink}>Cadastre-se</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -159,7 +164,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 24,
   },
   header: {
     alignItems: 'center',
@@ -169,18 +174,24 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   subtitulo: {
     fontSize: 16,
     color: '#666',
   },
-  formContainer: {
+  formulario: {
     width: '100%',
+    paddingHorizontal:20
   },
-  inputContainer: {
+  inputGroup: {
     marginBottom: 20,
-    paddingHorizontal:20,
+  },
+  label: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 8,
+    fontWeight: '500',
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -188,58 +199,56 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    paddingHorizontal: 12,
     backgroundColor: '#fff',
+    paddingHorizontal: 12,
   },
   inputError: {
-    borderColor: 'red',
+    borderColor: '#ff4444',
   },
-  inputIcon: {
+  icon: {
     marginRight: 10,
   },
-  inputLabel: {
-    fontSize: 16,
-    marginBottom: 8,
-    color: '#333',
-    fontWeight: '500',
-  },
   input: {
-    outlineStyle: 'none',
     flex: 1,
-    paddingVertical: 12,
+    height: 48,
     fontSize: 16,
+    color: '#333',
+    outlineStyle: 'none',
   },
   eyeIcon: {
-    padding: 10,
+    padding: 8,
   },
-  btnLogin: {
+  botao: {
+    height: 48,
     backgroundColor: '#32A017',
-    padding: 15,
     borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 30,
-    
+    marginTop: 24,
   },
-  btnText: {
+  botaoDesativado: {
+    opacity: 0.7,
+  },
+  botaoTexto: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   registroContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 24,
   },
-  registroText: {
+  registroTexto: {
     color: '#666',
   },
   registroLink: {
     color: '#32A017',
     fontWeight: 'bold',
   },
-  textoErro: {
-    color: 'red',
+  erroTexto: {
+    color: '#ff4444',
     fontSize: 12,
-    marginTop: 5,
+    marginTop: 4,
   },
 });
