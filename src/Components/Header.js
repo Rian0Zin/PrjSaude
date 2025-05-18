@@ -15,7 +15,7 @@ export default function Header({ title }) {
 
             <Text style={styles.textoHeader}>{title}</Text>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Registro')}>
                 <AntDesign
                     style={{ borderRadius: 50, borderColor: 'green', borderWidth: 3 }}
                     name="user"

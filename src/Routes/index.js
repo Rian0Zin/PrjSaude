@@ -14,6 +14,7 @@ import BeberAgua from '../pages/BeberAgua/BeberAgua';
 import Vacinas from '../pages/Vacinas';
 import Diabetes from '../pages/Diabetes';
 import Login from '../pages/Login';
+import Registro from '../pages/Login';
 import DigitarDadosRemedio from '../pages/Remedios/digitarDadosRemedio';
 import Remedio from '../pages/Remedios';
 import FazerRegistroDiabete from '../pages/Diabetes/fazerRegistroDiabete';
@@ -26,6 +27,7 @@ export default function App() {
     <NavigationContainer >
       <Drawer.Navigator screenOptions={{headerLeft:()=> null, }} > 
        <Drawer.Screen  name='Home' component={Home} options={{header:()=> <Header title='Home' />}} />
+        <Drawer.Screen name='Registro' component={Registro} options={{header:()=> <Header title='Registro'/>, drawerItemStyle: { display: 'none' },  }}  />
         <Drawer.Screen name='Login' component={Login} options={{header:()=> <Header title='Login'/>, drawerItemStyle: { display: 'none' },  }}  />
         <Drawer.Screen name='IMC' component={DigitarDadosImc} options={{header:()=> <Header title='IMC'/>}}  />
         <Drawer.Screen name='resultadoImc' component={IMC} options={{header:()=> <Header title='IMC'/>,  drawerItemStyle: { display: 'none' },}}  />
