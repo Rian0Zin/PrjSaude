@@ -196,20 +196,29 @@ export default function Registro({ navigation, route }) {
 
       let response;
       if (usuarioParaEditar) {
-
         response = await api.post(`/usuario/${idUsuario}`, dados, config);
       } else {
-        // Criação
         response = await api.post('/usuario', dados, config);
       }
 
-      // Verificação da resposta de acordo com a estrutura real
-      if (!response.data || !response.data.data) {
-        throw new Error('Resposta da API inválida');
+      console.log('Resposta completa da API:', response.data); // Log para debug
+
+      // Verificação mais flexível da resposta
+      let usuarioResposta;
+      
+      if (response.data.data) {
+        // Caso 1: Resposta com estrutura { data: { ... } }
+        usuarioResposta = response.data.data;
+      } else if (response.data.usuario) {
+        // Caso 2: Resposta com estrutura { usuario: { ... } }
+        usuarioResposta = response.data.usuario;
+      } else if (response.data.idUsuario) {
+        // Caso 3: Resposta direta com os dados do usuário
+        usuarioResposta = response.data;
+      } else {
+        throw new Error('Estrutura da resposta não reconhecida');
       }
 
-      const usuarioResposta = response.data.data;
-      
       const usuarioParaSalvar = {
         idUsuario: usuarioResposta.idUsuario || idUsuario,
         nomeUsuario: usuarioResposta.nomeUsuario || nomeUsuario,
@@ -236,9 +245,10 @@ export default function Registro({ navigation, route }) {
       let errorMessage = 'Erro desconhecido';
       
       if (error.response) {
-        // Mostra a mensagem da API ou o status
+        // Tenta obter a mensagem de erro de várias formas possíveis
         errorMessage = error.response.data?.mensagem || 
                       error.response.data?.message ||
+                      (typeof error.response.data === 'string' ? error.response.data : null) ||
                       error.response.statusText;
       } else if (error.request) {
         errorMessage = 'Sem resposta do servidor';
@@ -246,7 +256,7 @@ export default function Registro({ navigation, route }) {
         errorMessage = error.message || 'Erro ao processar a requisição';
       }
       
-      Alert.alert('Erro', errorMessage);
+      Alert.alert('Erro', errorMessage || 'Ocorreu um erro inesperado');
     }
   };
 

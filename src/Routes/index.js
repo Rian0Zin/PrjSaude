@@ -30,7 +30,7 @@ export default function App() {
         <Drawer.Screen name="Splash" component={Splash} options={{ headerShown: false, drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen  name='Home' component={Home} options={{header:()=> <Header title='Home' />}} />
         <Drawer.Screen name='Registro' component={Registro} options={{header:()=> <Header title='Seu perfil'/>, drawerItemStyle: { display: 'none' },  }}  />
-        <Drawer.Screen name='Login' component={Login} options={{header:()=> <Header title='Login'/>, drawerItemStyle: { display: 'none' },  }}  />
+        <Drawer.Screen name='Login' component={Login} options={{header:()=> <Header title='Registro'/>, drawerItemStyle: { display: 'none' },  }}  />
         <Drawer.Screen name='IMC' component={DigitarDadosImc} options={{header:()=> <Header title='IMC'/>}}  />
         <Drawer.Screen name='resultadoImc' component={IMC} options={{header:()=> <Header title='IMC'/>,  drawerItemStyle: { display: 'none' },}}  />
         <Drawer.Screen name='Sobre' component={Sobre} options={{header:()=> <Header title='Sobre'/>, drawerItemStyle:{display:'none'}}}   />
