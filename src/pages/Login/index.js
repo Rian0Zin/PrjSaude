@@ -92,117 +92,103 @@ export default function Registro({ navigation }) {
     }
   }
 
-  const handleChooseImage = () => {
-    launchImageLibrary(
-      {
+  const handleChooseImage = async () => {
+    try {
+      const result = await launchImageLibrary({
         mediaType: 'photo',
         quality: 0.7,
-      },
-      (response) => {
-        if (response.didCancel) {
-          console.log('Cancelado pelo usuário');
-        } else if (response.errorCode) {
-          console.log('Erro: ', response.errorMessage);
-        } else if (response.assets && response.assets.length > 0) {
-          setImageUri(response.assets[0].uri);
-        }
+      });
+
+      if (result.didCancel) {
+        console.log('Cancelado pelo usuário');
+      } else if (result.errorCode) {
+        console.log('Erro: ', result.errorMessage);
+      } else if (result.assets && result.assets.length > 0) {
+        setImageUri(result.assets[0].uri);
       }
-    );
+    } catch (error) {
+      console.error('Erro ao selecionar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem');
+    }
   };
 
-
   const handleEnviar = async () => {
-    // Validação do formulário
     if (!validarFormulario()) {
-      return;
+        return;
     }
 
-    // Verificação de email existente
     const emailExiste = await verificarEmailExistente(emailUsuario);
     if (emailExiste) {
-      Alert.alert('Cadastro não realizado', 'Este email já está cadastrado!');
-      return;
+        Alert.alert('Cadastro não realizado', 'Este email já está cadastrado!');
+        return;
     }
 
-    // Converter valores numéricos
     const idade = parseInt(idadeUsuario);
     const altura = parseFloat(alturaUsuario);
     const peso = parseFloat(pesoUsuario);
 
-    // Converter imagens para base64 se existirem
     let fotoBase64 = null;
-    
-    try {
-      if (imageUri) {
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
-        fotoBase64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result.split(',')[1]);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao converter imagem:', error);
-      Alert.alert('Erro', 'Não foi possível processar as imagens');
-      return;
-    }   
+    if (imageUri && !imageUri.startsWith('http')) {
+        try {
+            const response = await fetch(imageUri);
+            const blob = await response.blob();
+            fotoBase64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.error('Erro na conversão da imagem:', error);
+            Alert.alert('Erro', 'Falha ao processar a imagem');
+            return;
+        }
+    }
 
-    // Preparar dados para a API
-     const dados = {
-      nomeUsuario,
-      emailUsuario,
-      senhaUsuario,
-      idadeUsuario: idade,
-      alturaUsuario: altura,
-      pesoUsuario: peso,
-      fotoUsuario: fotoBase64, // <-- use esse nome aqui
+    const dados = {
+        nomeUsuario,
+        emailUsuario,
+        senhaUsuario,
+        idadeUsuario: idade,
+        alturaUsuario: altura,
+        pesoUsuario: peso,
+        fotoBase64: fotoBase64 || null,
     };
 
-    console.log('Dados a serem enviados:', dados); // Verifique no console
-
     try {
-        const response = await api.post('/usuario', dados, {
+        // DECLARE config AQUI!
+        const config = {
             headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            transformRequest: [(data) => JSON.stringify(data)] // Força stringify
-        });
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        };
+
+        const response = await api.post('/usuario', dados, config);
         
-        console.log('Resposta completa:', response); // Verifique a resposta
-        try {
-          await AsyncStorage.setItem('usuario', JSON.stringify({
-            nomeUsuario,
-            emailUsuario,
-            idadeUsuario: idade,
-            alturaUsuario: altura,
-            pesoUsuario: peso,
-            imageUri,
-          }));
+        const usuarioParaSalvar = {
+            nomeUsuario: response.data.usuario.nomeUsuario,
+            emailUsuario: response.data.usuario.emailUsuario,
+            idadeUsuario: response.data.usuario.idadeUsuario,
+            alturaUsuario: response.data.usuario.alturaUsuario,
+            pesoUsuario: response.data.usuario.pesoUsuario,
+            fotoUsuario: response.data.usuario.fotoUsuario
+        };
 
-          console.log('Usuário salvo localmente no AsyncStorage');
-        } catch (erro) {
-          console.error('Erro ao salvar no AsyncStorage:', erro);
-        }
-
-        // Redirecionar para a Home
+        await AsyncStorage.setItem('usuario', JSON.stringify(usuarioParaSalvar));
         navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: 'Home' }],
-          })
+            CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Home' }],
+            })
         );
-    } catch (error) {
-        console.error('Detalhes do erro:', {
-            request: error.config,
-            response: error.response?.data,
-            message: error.message
-        });
-  };
-}
 
+    } catch (error) {
+        console.error('Erro completo:', error);
+        const errorMessage = error.response?.data?.message || 'Erro desconhecido';
+        Alert.alert('Erro', errorMessage);
+    }
+};
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <SafeAreaView style={styles.container}>

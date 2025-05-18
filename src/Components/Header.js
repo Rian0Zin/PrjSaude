@@ -17,6 +17,8 @@ export default function Header({ title }) {
             try {
                 setLoading(true);
                 const dados = await AsyncStorage.getItem('usuario');
+                const usuario = JSON.parse(dados);
+
 
                 // More robust check for undefined/null/empty
                 if (dados && dados !== 'undefined' && dados !== 'null' && dados.trim() !== '') {
@@ -29,16 +31,9 @@ export default function Header({ title }) {
                             setUsuarioLogado(usuario);
                             
                             // Check if foto exists and is a string
-                            if (usuario.fotoUsuario && typeof usuario.fotoUsuario === 'string') {
-                                // Se for base64, use diretamente
-                                const isBase64 = usuario.fotoUsuario.startsWith('/') || usuario.fotoUsuario.length > 100;
-
-                                const imageUri = isBase64
-                                    ? `data:image/jpeg;base64,${usuario.fotoUsuario}`
-                                    : `http://127.0.0.1:8081/img/fotoUsuario/${usuario.fotoUsuario}`;
-
-                                setFoto(imageUri);
-                                }
+                            if (usuario?.fotoUsuario) {
+    setFoto(`http://127.0.0.1:8081/img/fotoUsuario/${usuario.fotoUsuario}`);
+}
                         }
                     } catch (parseError) {
                         console.error('Erro ao parsear usuário:', parseError);
