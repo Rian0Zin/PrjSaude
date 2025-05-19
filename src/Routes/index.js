@@ -21,7 +21,7 @@ import Remedio from '../pages/Remedios';
 import FazerRegistroDiabete from '../pages/Diabetes/fazerRegistroDiabete';
 import Pressao from '../pages/Pressão';
 import FazerRegistroPressao from '../pages/Pressão/fazerRegistroPressao';
-import Splash from '../pages/Splash/splash';
+import Splash from '../pages/Splash';
 
 const Drawer = createDrawerNavigator();
 
