@@ -2,12 +2,15 @@ import React, { useState, Fragment, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, TextInput } from 'react-native';
 import styles from './styles';
 import { useFocusEffect } from '@react-navigation/native';
-
+import axios from 'axios';
 export default function FazerRegistroPressao({ navigation }) {
 
     const [sistolica, setSistolica] = useState('');
     const [diastolica, setDiastolica] = useState('');
     const [pulso, setPulso] = useState('');
+    const [hora, setHora] = useState('');
+    const [data,setData] = useState('');
+
     const [campoSelecionado, setCampoSelecionado] = useState('sistolica');
     const [passo, setPasso] = useState(0);
 
@@ -97,6 +100,42 @@ export default function FazerRegistroPressao({ navigation }) {
     };
 
     const estadoAutal = obterClassificacao(sistolica, diastolica);
+
+async function CriarRegistroPressao() {
+    try {
+        console.log('Data:', data);  // Log da data
+        console.log('Hora:', hora);  // Log da hora
+
+        const url = 'http://127.0.0.1:8081/api/pressao/criar';
+
+        const dados = {
+            sistolicaPressao: parseInt(sistolica),
+            diastolicaPressao: parseInt(diastolica),
+            pulsoPressao: parseInt(pulso),
+            horaPressao: hora,
+            dataPressao: data // Ou manter data no formato original se o backend converter
+        };
+
+        console.log('Dados a serem enviados para a API:', dados);  // Verificando todos os dados antes do envio
+
+        const response = await axios.post(url, dados, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.data.success) {
+            alert('Registro salvo com sucesso!');
+            console.log(data, hora);
+            navigation.goBack(); // Voltar para tela anterior
+        } else {
+            alert(`Erro ao salvar: ${response.data.message}`);
+        }
+    } catch (error) {
+        console.error('Erro detalhado:', error.response || error);
+        alert(`Erro ao conectar com o servidor: ${error.message}`);
+    }
+}
 
     useFocusEffect(
         useCallback(() => {
@@ -196,6 +235,8 @@ export default function FazerRegistroPressao({ navigation }) {
                             <TextInput
                                 style={styles.inputHorario}
                                 keyboardType="numeric"
+                                value={hora}
+                                onChangeText={setHora}
                                 maxLength={5}
                                 placeholder="00:00"
                             />
@@ -203,6 +244,8 @@ export default function FazerRegistroPressao({ navigation }) {
                                 style={styles.inputData}
                                 keyboardType="numeric"
                                 maxLength={10}
+                                value={data}
+                                onChangeText={setData}
                                 placeholder="dd/mm/aaaa"
                             />
                         </View>
@@ -232,7 +275,7 @@ export default function FazerRegistroPressao({ navigation }) {
                         </View>
                     </View>
                     <View style={styles.viewBotaoAdicionar}>
-                        <TouchableOpacity onPress={() => setPasso(1)} style={styles.botaoAdicionar}>
+                        <TouchableOpacity onPress={ CriarRegistroPressao} style={styles.botaoAdicionar}>
                             <Text>Salvar</Text>
                         </TouchableOpacity>
                     </View>
