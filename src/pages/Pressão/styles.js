@@ -32,12 +32,12 @@ export default StyleSheet.create({
         flex: 1,
     },
     medidaTitulo: {
-        fontSize: 14,
+        fontSize: 20,
         color: '#666',
         marginBottom: 5,
     },
     qntMedida: {
-        fontSize: 16,
+        fontSize: 22,
         fontWeight: 'bold',
         color: '#000',
     },
@@ -47,11 +47,11 @@ export default StyleSheet.create({
         marginTop: 10,
     },
     data: {
-        fontSize: 14,
+        fontSize: 18,
         color: '#555',
     },
     horario: {
-        fontSize: 14,
+        fontSize: 18,
         color: '#555',
     },
     // Estilos para Classificação

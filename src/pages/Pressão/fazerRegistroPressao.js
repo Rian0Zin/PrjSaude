@@ -209,7 +209,7 @@ async function CriarRegistroPressao() {
                 </Fragment>
             )}
             {passo === 1 && (
-                <Fragment>
+                <Fragment >
                     <View style={styles.telaInputPressao}>
                         <Text style={styles.tituloInputPressao}>Pressão Arterial</Text>
                         <View style={styles.linhaPressao}>
