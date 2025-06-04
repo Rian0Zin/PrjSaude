@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, SafeAreaView, TouchableOpacity } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, FlatList } from "react-native";
 import styles from "./styles";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import axios from "axios";
@@ -9,6 +9,26 @@ export default function Pressao({ navigation }) {
   const sistolica = 1;
   const diastolica = 1;
   const [pressao, setPressao] = useState([]);
+  const [ultimoRegistro, setUltimoRegistro] = useState();
+const [classificacao, setClassificacao] = useState(null);
+
+  const ultimoRegistroPressao = async () => {
+    try {
+      const response = await axios.get("http://127.0.0.1:8081/api/pressao/ultimoRegistro");
+      if (response.status === 200) {
+        setUltimoRegistro(response.data);
+      }
+      else {
+        Alert.alert(
+          "Erro",);
+      }
+    }
+    catch (error) {
+      console.error("Erro ao buscar último registro de pressão:", error);
+      Alert.alert("Erro", "Falha na conexão com o servidor");
+    }
+  };
+
   const fetchPressao = async () => {
     try {
       const response = await axios.get(
@@ -16,10 +36,13 @@ export default function Pressao({ navigation }) {
       );
 
       if (response.status === 200) {
-        const pressaoRegistros = response.data.map((pressao) => ({
-          ...pressao,
-        }));
-        setPressao(pressaoRegistros);
+        if (Array.isArray(response.data)) {
+          setPressao(response.data);
+        } else {
+          // Se for objeto, converte para array
+          const pressaoArray = Object.values(response.data);
+          setPressao(pressaoArray);
+        }
       } else {
         console.error("Erro na API:", response.status, response.statusText);
         Alert.alert(
@@ -32,6 +55,7 @@ export default function Pressao({ navigation }) {
       Alert.alert("Erro", "Falha na conexão com o servidor");
     }
   };
+
 
   const obterClassificacao = (sis, dia) => {
     if (sis < 120 && dia < 80) {
@@ -67,79 +91,107 @@ export default function Pressao({ navigation }) {
     }
   };
 
-  const classificacao = obterClassificacao(sistolica, diastolica);
+;
 
   useEffect(() => {
     fetchPressao();
+    ultimoRegistroPressao();
+
   }, []);
+
+  useEffect(() => {
+  if (ultimoRegistro?.data?.sistolicaPressao && ultimoRegistro?.data?.diastolicaPressao) {
+    const resultado = obterClassificacao(
+      ultimoRegistro.data.sistolicaPressao,
+      ultimoRegistro.data.diastolicaPressao
+    );
+    setClassificacao(resultado);
+  }
+}, [ultimoRegistro]);
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.ultimaMedida}>
-        <Text style={styles.titulo}>Última Medida</Text>
+      {ultimoRegistro && (
+        console.log(ultimoRegistro),
 
-        <View style={styles.medidasLinha}>
-          <View style={styles.medidaItem}>
-            <Text style={styles.medidaTitulo}>Sistólica</Text>
-            <Text style={styles.qntMedida}>100 mmHg</Text>
+        <View style={styles.ultimaMedida}>
+          <Text style={styles.titulo}>Última Medida</Text>
+
+          <View style={styles.medidasLinha}>
+            <View style={styles.medidaItem}>
+              <Text style={styles.medidaTitulo}>Sistólica</Text>
+              <Text style={styles.qntMedida}>{ultimoRegistro.data.sistolicaPressao} mmHg</Text>
+            </View>
+            <View style={styles.medidaItem}>
+              <Text style={styles.medidaTitulo}>Diastólica</Text>
+              <Text style={styles.qntMedida}>{ultimoRegistro.data.diastolicaPressao} mmHg</Text>
+            </View>
+            <View style={styles.medidaItem}>
+              <Text style={styles.medidaTitulo}>Pulso</Text>
+              <Text style={styles.qntMedida}>{ultimoRegistro.data.pulsoPressao} bpm</Text>
+            </View>
           </View>
-          <View style={styles.medidaItem}>
-            <Text style={styles.medidaTitulo}>Diastólica</Text>
-            <Text style={styles.qntMedida}>100 mmHg</Text>
-          </View>
-          <View style={styles.medidaItem}>
-            <Text style={styles.medidaTitulo}>Pulso</Text>
-            <Text style={styles.qntMedida}>100 bpm</Text>
+
+          <View style={styles.ultimaMedidaItem}>
+            <Text style={styles.data}>Data: {ultimoRegistro.data.dataPressao}</Text>
+            <Text style={styles.horario}>Horário: {ultimoRegistro.data.horaPressao}</Text>
           </View>
         </View>
+      )}
+{classificacao && (
+  <View style={[styles.classificacaoContainer, classificacao.cor]}>
+    <Text style={styles.classificacaoTitulo}>Classificação Atual</Text>
+    <Text style={styles.classificacaoTexto}>
+      Sua pressão está:{" "}
+      <Text style={styles.classificacaoNivel}>{classificacao.nivel}</Text>
+    </Text>
+    <Text style={styles.recomendacao}>{classificacao.recomendacao}</Text>
+  </View>
+)}
 
-        <View style={styles.ultimaMedidaItem}>
-          <Text style={styles.data}>Data: 01/01/2023</Text>
-          <Text style={styles.horario}>Horário: 03:33</Text>
-        </View>
-      </View>
-      <View style={[styles.classificacaoContainer, classificacao.cor]}>
-        <Text style={styles.classificacaoTitulo}>Classificação Atual</Text>
-        <Text style={styles.classificacaoTexto}>
-          Sua pressão está:{" "}
-          <Text style={styles.classificacaoNivel}>{classificacao.nivel}</Text>
-        </Text>
-        <Text style={styles.recomendacao}>{classificacao.recomendacao}</Text>
-      </View>
       <View style={styles.historicoPressao}>
         <Text style={styles.titulo}>Histórico de pressão</Text>
 
         {pressao.length > 0 ? (
-          pressao.map((registro, index) => (
-            <View key={index} style={{marginBottom:25, borderBottomWidth:2, borderBottomColor:'black'}}>
-              <View style={styles.medidasLinha}>
-                <View style={styles.medidaItem}>
-                  <Text style={styles.medidaTitulo}>Sistólica</Text>
-                  <Text style={styles.qntMedida}>
-                    {registro.sistolicaPressao }mmHg
-                  </Text>
+          <FlatList
+            data={pressao}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item: registro }) => (
+              <View style={styles.registroContainer}>
+                <View style={styles.medidasLinha}>
+                  <View style={styles.medidaItem}>
+                    <Text style={styles.medidaTitulo}>Sistólica</Text>
+                    <Text style={styles.qntMedida}>
+                      {registro.sistolicaPressao}mmHg
+                    </Text>
+                  </View>
+                  <View style={styles.medidaItem}>
+                    <Text style={styles.medidaTitulo}>Diastólica</Text>
+                    <Text style={styles.qntMedida}>
+                      {registro.diastolicaPressao} mmHg
+                    </Text>
+                  </View>
+                  <View style={styles.medidaItem}>
+                    <Text style={styles.medidaTitulo}>Pulso</Text>
+                    <Text style={styles.qntMedida}>{registro.pulsoPressao} bpm</Text>
+                  </View>
                 </View>
-                <View style={styles.medidaItem}>
-                  <Text style={styles.medidaTitulo}>Diastólica</Text>
-                  <Text style={styles.qntMedida}>
-                    {registro.diastolicaPressao} mmHg
-                  </Text>
-                </View>
-                <View style={styles.medidaItem}>
-                  <Text style={styles.medidaTitulo}>Pulso</Text>
-                  <Text style={styles.qntMedida}>{registro.pulsoPressao} bpm</Text>
-                </View>
-              </View>
 
-              <View style={styles.ultimaMedidaItem}>
-                <Text style={styles.data}>Data: {registro.dataPressao}</Text>
-                <Text style={styles.horario}>
-                  Horário: {registro.horaPressao}
-                </Text>
+                <View style={styles.ultimaMedidaItem}>
+                  <Text style={styles.data}>Data: {registro.dataPressao}</Text>
+                  <Text style={styles.horario}>
+                    Horário: {registro.horaPressao}
+                  </Text>
+                </View>
               </View>
-            </View>
-          ))
+            )}
+            ItemSeparatorComponent={() => <View style={styles.separador} />}
+            ListEmptyComponent={
+              <Text style={styles.semRegistros}>Nenhum registro encontrado.</Text>
+            }
+            contentContainerStyle={pressao.length === 0 && styles.listaVazia}
+          />
         ) : (
-          <Text>AAAI</Text>
+          <Text style={styles.semRegistros}>Nenhum registro encontrado.</Text>
         )}
       </View>
 

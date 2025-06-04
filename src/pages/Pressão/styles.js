@@ -14,6 +14,7 @@ export default StyleSheet.create({
         borderRadius: 10,
         marginBottom: 20,
         padding: 10,
+        marginTop:10
     },
     titulo: {
         fontSize: 20,
@@ -22,19 +23,19 @@ export default StyleSheet.create({
         textAlign: 'center',
         color: '#333',
     },
-    medidasLinha: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 10,
-    },
-    medidaItem: {
-        alignItems: 'center',
-        flex: 1,
-    },
+  medidasLinha: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  medidaItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+
     medidaTitulo: {
-        fontSize: 20,
-        color: '#666',
-        marginBottom: 5,
+    fontSize: 14,
+    color: '#666',
     },
     qntMedida: {
         fontSize: 22,
@@ -46,6 +47,12 @@ export default StyleSheet.create({
         justifyContent: 'space-between',
         marginTop: 10,
     },
+      separador: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginVertical: 8,
+  },
+
     data: {
         fontSize: 18,
         color: '#555',
@@ -96,6 +103,7 @@ export default StyleSheet.create({
     },
 
     historicoPressao: {
+        flex: 1,
         backgroundColor: '#fff',
         width: '90%',
         height: 'auto',
@@ -119,16 +127,30 @@ export default StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 2,
     },
+
+      registroContainer: {
+    paddingVertical: 16,
+  },
+
     texto: {
         color: 'green',
         fontSize: 24,
     },
 
-
+  semRegistros: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: '#666',
+  },
+    listaVazia: {
+    flex: 1,
+    justifyContent: 'center',
+  },
 
     telaInputPressao: {
         backgroundColor: '#fff',
-        width: '90%',
+        width: '95%',
         height: '40%',
         borderRadius: 10,
         marginBottom: 5,
