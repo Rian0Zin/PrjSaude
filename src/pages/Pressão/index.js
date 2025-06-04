@@ -110,7 +110,7 @@ const [classificacao, setClassificacao] = useState(null);
 }, [ultimoRegistro]);
   return (
     <SafeAreaView style={styles.container}>
-      {ultimoRegistro && (
+      {ultimoRegistro  ?(
         console.log(ultimoRegistro),
 
         <View style={styles.ultimaMedida}>
@@ -136,7 +136,7 @@ const [classificacao, setClassificacao] = useState(null);
             <Text style={styles.horario}>Horário: {ultimoRegistro.data.horaPressao}</Text>
           </View>
         </View>
-      )}
+      ):(<View> <Text> Nenhum registro encontrado. </Text></View>)}
 {classificacao && (
   <View style={[styles.classificacaoContainer, classificacao.cor]}>
     <Text style={styles.classificacaoTitulo}>Classificação Atual</Text>
