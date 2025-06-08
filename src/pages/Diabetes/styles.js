@@ -12,7 +12,7 @@ export default StyleSheet.create({
         height: 'auto',
         borderRadius: 10,
         marginBottom: 20,
-        marginTop:50,
+        marginTop:10,
         padding: 10,
     },
     titulo: {
@@ -63,6 +63,7 @@ export default StyleSheet.create({
         paddingTop: 40,
     },
     historicoGlicemia: {
+        flex:1,
         backgroundColor: '#fff',
         width: '90%',
         height: 'auto',
@@ -235,10 +236,11 @@ export default StyleSheet.create({
         fontWeight: 'bold'
     },
     pickerRefeicao: {
-        width: '85%',
-        borderRadius: 10,
+        width: '95%',
+        borderRadius: 5,
         borderColor: 'green',
         borderWidth: 1,
+        marginTop:10,
 
     },
     indicadores: {
@@ -248,6 +250,10 @@ export default StyleSheet.create({
         borderRadius: 10,
         marginBottom: 20,
         padding: 10,
+    },
+    semRegistros:{
+        textAlign:'center',
+        fontSize: 16,
     },
 
     legenda: {

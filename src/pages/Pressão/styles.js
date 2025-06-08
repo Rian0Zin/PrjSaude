@@ -19,7 +19,7 @@ export default StyleSheet.create({
     titulo: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 15,
+        marginBottom: 10,
         textAlign: 'center',
         color: '#333',
     },
@@ -36,9 +36,10 @@ export default StyleSheet.create({
     medidaTitulo: {
     fontSize: 14,
     color: '#666',
+    
     },
     qntMedida: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: 'bold',
         color: '#000',
     },
@@ -67,6 +68,7 @@ export default StyleSheet.create({
         borderRadius: 10,
         padding: 15,
         marginBottom: 20,
+        
     },
     classificacaoTitulo: {
         fontSize: 20,
@@ -82,7 +84,7 @@ export default StyleSheet.create({
         fontWeight: 'bold',
     },
     recomendacao: {
-        fontSize: 14,
+        fontSize: 50,
         color: '#333',
     },
 
@@ -99,7 +101,7 @@ export default StyleSheet.create({
         backgroundColor: '#f8d7da',
     },
     classificacaoCinza: {
-        backgroundColor: '#e2e3e5',
+        backgroundColor: '#fff',
     },
 
     historicoPressao: {
@@ -130,6 +132,10 @@ export default StyleSheet.create({
 
       registroContainer: {
     paddingVertical: 16,
+        marginBottom: 5,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ccc',
   },
 
     texto: {

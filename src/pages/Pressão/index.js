@@ -10,7 +10,7 @@ export default function Pressao({ navigation }) {
   const diastolica = 1;
   const [pressao, setPressao] = useState([]);
   const [ultimoRegistro, setUltimoRegistro] = useState();
-const [classificacao, setClassificacao] = useState(null);
+  const [classificacao, setClassificacao] = useState(null);
 
   const ultimoRegistroPressao = async () => {
     try {
@@ -91,7 +91,7 @@ const [classificacao, setClassificacao] = useState(null);
     }
   };
 
-;
+  ;
 
   useEffect(() => {
     fetchPressao();
@@ -100,17 +100,17 @@ const [classificacao, setClassificacao] = useState(null);
   }, []);
 
   useEffect(() => {
-  if (ultimoRegistro?.data?.sistolicaPressao && ultimoRegistro?.data?.diastolicaPressao) {
-    const resultado = obterClassificacao(
-      ultimoRegistro.data.sistolicaPressao,
-      ultimoRegistro.data.diastolicaPressao
-    );
-    setClassificacao(resultado);
-  }
-}, [ultimoRegistro]);
+    if (ultimoRegistro?.data?.sistolicaPressao && ultimoRegistro?.data?.diastolicaPressao) {
+      const resultado = obterClassificacao(
+        ultimoRegistro.data.sistolicaPressao,
+        ultimoRegistro.data.diastolicaPressao
+      );
+      setClassificacao(resultado);
+    }
+  }, [ultimoRegistro]);
   return (
     <SafeAreaView style={styles.container}>
-      {ultimoRegistro  ?(
+      {ultimoRegistro?.data?.sistolicaPressao && ultimoRegistro?.data?.diastolicaPressao ? (
         console.log(ultimoRegistro),
 
         <View style={styles.ultimaMedida}>
@@ -136,17 +136,34 @@ const [classificacao, setClassificacao] = useState(null);
             <Text style={styles.horario}>Horário: {ultimoRegistro.data.horaPressao}</Text>
           </View>
         </View>
-      ):(<View> <Text> Nenhum registro encontrado. </Text></View>)}
-{classificacao && (
-  <View style={[styles.classificacaoContainer, classificacao.cor]}>
-    <Text style={styles.classificacaoTitulo}>Classificação Atual</Text>
-    <Text style={styles.classificacaoTexto}>
-      Sua pressão está:{" "}
-      <Text style={styles.classificacaoNivel}>{classificacao.nivel}</Text>
-    </Text>
-    <Text style={styles.recomendacao}>{classificacao.recomendacao}</Text>
-  </View>
-)}
+      ) :
+        (
+          <View style={styles.ultimaMedida}>
+            <Text style={styles.titulo}>Última Medida</Text>
+
+            <Text style={{textAlign: 'center',              fontSize: 16, color: '#666'
+            }}>Nenhum registro encontrado.</Text>
+          </View>
+        )}
+      {classificacao ? (
+        <View style={[styles.classificacaoContainer, classificacao.cor]}>
+          <Text style={styles.classificacaoTitulo}>Classificação Atual</Text>
+          <Text style={styles.classificacaoTexto}>
+            Sua pressão está:{" "}
+            <Text style={styles.classificacaoNivel}>{classificacao.nivel}</Text>
+          </Text>
+          <Text style={styles.recomendacao}>{classificacao.recomendacao}</Text>
+        </View>
+      ) : (
+        <View style={[styles.classificacaoContainer, styles.classificacaoCinza]}>
+          <Text style={styles.classificacaoTitulo}>Classificação Atual</Text>
+          <View style={{alignItems: 'center'}}>
+          <Text style={styles.classificacaoTexto}>
+            Nenhum registro encontrado.
+          </Text>
+          <Text style={styles.classificacaoNivel}>Faça um registro para saber sobre seu estado.</Text>
+          </View>
+        </View>)}
 
       <View style={styles.historicoPressao}>
         <Text style={styles.titulo}>Histórico de pressão</Text>
@@ -154,6 +171,7 @@ const [classificacao, setClassificacao] = useState(null);
         {pressao.length > 0 ? (
           <FlatList
             data={pressao}
+            showsHorizontalScrollIndicator={false}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item: registro }) => (
               <View style={styles.registroContainer}>
