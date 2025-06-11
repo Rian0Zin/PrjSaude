@@ -144,6 +144,19 @@ const [usuario, setUsuario] = useState(null);
         </View>
         </TouchableOpacity>
 
+        <TouchableOpacity onPress={() => navigation.navigate('Dicas para dormir')}>
+        <View style={styles.card}>
+          <Image
+            style={styles.cardImg}
+            source={{ uri: "https://media.istockphoto.com/id/1357733473/pt/vetorial/sweet-dreams-concept.jpg?s=612x612&w=0&k=20&c=T_WOymJSWbQ5RQ_gB--WX1s4iJdbGWoEd9SnDwyKb1Y=" }}
+          />
+          <View style={styles.cardTexto}>
+            <Text>Dicas para dormir</Text>
+            
+          </View>
+        </View>
+        </TouchableOpacity>
+
       </ScrollView>
       </View>
       <StatusBar style="auto" />

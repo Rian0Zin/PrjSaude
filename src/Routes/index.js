@@ -22,7 +22,8 @@ import Pressao from '../pages/Pressão';
 import FazerRegistroPressao from '../pages/Pressão/fazerRegistroPressao';
 import Splash from '../pages/Splash';
 import FrasesMotivacionais from '../pages/FrasesMotivacionais';
-
+import DicasDormir from '../pages/DicasDormir';
+import Mantras from '../pages/Mantras';
 const Drawer = createDrawerNavigator();
 
 export default function App() {
@@ -46,6 +47,8 @@ export default function App() {
         <Drawer.Screen name='Digitar pressão' component={FazerRegistroPressao} options={{header:()=> <Header title='Pressão'/>, drawerItemStyle:{display:'none'}}}/>
         <Drawer.Screen name='LoginReal' component={LoginReal} options={{header:()=> <Header title='Login'/>, drawerItemStyle: { display: 'none' },  }}  />
         <Drawer.Screen name='Frases Motivacionais' component={FrasesMotivacionais} options={{header:()=> <Header title='Frases motivacionais'/> }}  />
+        <Drawer.Screen name='Dicas para dormir' component={DicasDormir} options={{header:()=> <Header title='Dicas para dormir'/> }}  />
+        <Drawer.Screen name='Mantras' component={Mantras} options={{header:()=> <Header title='Mantras'/> }}  />
 
       </Drawer.Navigator>
     </NavigationContainer>

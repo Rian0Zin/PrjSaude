@@ -4,13 +4,15 @@ import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
 import styles from './styles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import { Ionicons } from '@expo/vector-icons'; // ícone opcional
+import { Ionicons } from '@expo/vector-icons'; 
 import { Alert } from 'react-native';
+    import { format } from 'date-fns';
 import NiveisGlicemia from '../../Components/NiveisGlicemia'; // importa o gráfico
 //
 export default function Diabetes({ navigation }) {
   const [glicemia, setGlicemia] = useState([]);
   const [ultimoRegistro, setUltimoRegistro] = useState();
+  const [dataUltimoRegistro, setDataUltimoRegistro] = useState();
   const [percentuais, setPercentuais] = useState({ baixa: 0, normal: 0, alta: 0 });
 
   const ultimoRegistroDiabete = async () => {
@@ -18,6 +20,8 @@ export default function Diabetes({ navigation }) {
       const response = await axios.get("http://127.0.0.1:8081/api/diabetes/ultimoRegistro");
       if (response.status === 200) {
         setUltimoRegistro(response.data);
+        const dataFormatada = format(new Date(response.data.data.dataDiabete), 'dd/MM/yyyy'); // Formata para dd/MM/yyyy
+        setDataUltimoRegistro(dataFormatada);
       }
       else {
         Alert.alert(
@@ -40,6 +44,7 @@ export default function Diabetes({ navigation }) {
       if (response.status === 200) {
         if (Array.isArray(response.data)) {
           setGlicemia(response.data);
+          
           calcularPercentuais(response.data); // ADICIONE AQUI!
         } else {
           const dados = Array.isArray(response.data) ? response.data : Object.values(response.data);
@@ -99,7 +104,7 @@ export default function Diabetes({ navigation }) {
             <Text style={styles.qntMedida}>{ultimoRegistro.data.glicemiaDiabete} mg/dL </Text>
           </View>
           <View style={styles.ultimaMedidaItem}>
-            <Text style={styles.data}>Data: {ultimoRegistro.data.dataDiabete}</Text>
+            <Text style={styles.data}>Data: {dataUltimoRegistro}</Text>
             <Text style={styles.horario}>{ultimoRegistro.data.horaDiabete}</Text>
           </View>
 
