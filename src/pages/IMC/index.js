@@ -17,8 +17,10 @@ export default function IMC({navigation}) {
     useEffect(() => {
         //dentro do useeffect eu criei a função, e assim que finalizei ela, já executei ela 
         const chamarDadosSalvos = async () => {
-            const pesoSalvo = await AsyncStorage.getItem('peso');
-            const alturaSalva = await AsyncStorage.getItem('altura');
+            const dados = await AsyncStorage.getItem('usuario');
+            const infosUsuario = JSON.parse(dados);
+            const pesoSalvo = infosUsuario.pesoUsuario;
+            const alturaSalva = infosUsuario.alturaUsuario;
             setPeso(pesoSalvo);
             setAltura(alturaSalva);
             const pesoImc = parseFloat(pesoSalvo);
@@ -27,7 +29,7 @@ export default function IMC({navigation}) {
             if (!isNaN(pesoImc) && !isNaN(altImc) && altImc > 0) {
                 const calculoImc = (pesoImc / (altImc ** 2)).toFixed(2);
                 setImc(calculoImc);
-                definirCategoria(calculoImc);
+               //definirCategoria(calculoImc);
             }
         };
         chamarDadosSalvos();

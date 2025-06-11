@@ -2,7 +2,7 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity } from "react-native";
 import react,{useEffect,useState} from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+ 
 export default function Home({navigation}) {
 const [usuario, setUsuario] = useState(null);
 
@@ -99,6 +99,46 @@ const [usuario, setUsuario] = useState(null);
           />
           <View style={styles.cardTexto}>
             <Text>Lembrete de remédio</Text>
+            
+          </View>
+        </View>     
+        </TouchableOpacity>
+               
+        <TouchableOpacity onPress={() => navigation.navigate('Diabetes')}>
+        <View style={styles.card}>
+          <Image
+            style={styles.cardImg}
+            source={{ uri: "https://media.istockphoto.com/id/1302936488/pt/vetorial/person-do-glucose-test-measuring-sugar-in-blood-concept-vector.jpg?s=612x612&w=0&k=20&c=u37P5RgxC5V-tUkAmGcOYUISwV-fQKZ9dc7tNI5Ekds=" }}
+          />
+          <View style={styles.cardTexto}>
+            <Text>Registre sua glicemia</Text>
+            
+          </View>
+        </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('Pressão')}>
+        <View style={styles.card}>
+          <Image
+            style={styles.cardImg}
+            source={{ uri: "https://media.istockphoto.com/id/695935540/pt/vetorial/blood-pressure-icon.jpg?s=612x612&w=0&k=20&c=XjUdBknCxNPuD8a3CHEInIv_LwrwaCDhpf7Kz1MZovY=" }}
+          />
+          <View style={styles.cardTexto}>
+            <Text>Pressão Arterial</Text>
+            
+          </View>
+        </View>
+        </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigation.navigate('Frases Motivacionais')}>
+        <View style={styles.card}>
+          <Image
+            style={styles.cardImg}
+            source={{ uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQpBZ2iO8Ieh6BXokT0TBjXFOHjzZEE_C7OQ&s" }}
+            //https://img.freepik.com/vetores-premium/ilustracao-de-design-plano-moderno-de-motivacao_566886-363.jpg
+          />
+          <View style={styles.cardTexto}>
+            <Text>Frases motivacionais</Text>
             
           </View>
         </View>
