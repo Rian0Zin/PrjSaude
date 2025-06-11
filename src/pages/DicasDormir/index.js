@@ -65,11 +65,7 @@ export default function DicasDormir({ navigation }) {
             setIsPlaying(true);
             
             // Configurar listener para quando o som terminar naturalmente
-            novoSom.setOnPlaybackStatusUpdate(status => {
-                if (status.didJustFinish) {
-                    setIsPlaying(false);
-                }
-            });
+        
         } catch (error) {
             console.error('Erro ao carregar o som:', error);
         }
