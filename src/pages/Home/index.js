@@ -157,6 +157,20 @@ const [usuario, setUsuario] = useState(null);
         </View>
         </TouchableOpacity>
 
+        <TouchableOpacity onPress={() => navigation.navigate('Mantras')}>
+        <View style={styles.card}>
+          <Image
+            style={styles.cardImg}
+            source={{ uri: " https://media.istockphoto.com/id/2027577054/pt/vetorial/woman-meditating-with-closed-eyes-sitting-cross-legged-on-floor-and-doing-yoga-lotus-pose.jpg?s=612x612&w=0&k=20&c=jQ8JgnFoerXxnYuPjQ4-OEdS6BTBX25PJaEdMdUjghA=" }}
+          />
+          <View style={styles.cardTexto}>
+            <Text>Mantras</Text>
+            
+          </View>
+        </View>
+        </TouchableOpacity>
+       
+
       </ScrollView>
       </View>
       <StatusBar style="auto" />

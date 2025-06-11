@@ -3,15 +3,34 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Audio } from 'expo-av';
 import { Slider } from '@react-native-assets/slider';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
-export default function AudioPlayer({ navigation }) {
+const musicas = [
+  {
+    "id": 1,
+    'audioFile': require('../../../assets/mantraCalmaria.mp3'),
+    "img": "https://f4.bcbits.com/img/a1908449552_16.jpg",
+    "nome": "Mantra da Calmaria",
+    "frase": " Sonhos... Todo homem tem sonhos... Todo homem deseja perseguir seu sonho. Isso tortura ele, mas o sonho da sentido à vida dele. ",
+    "autor":"Guts"
+  },
+  {
+    "id": 2,
+    'audioFile': require('../../../assets/unravel.mp3'), // Substitua pelo segundo arquivo
+    "img": "https://i.scdn.co/image/ab67616d0000b2739505c1c6c045e222bda01ca0",
+    "nome": "Mantra da Paz",
+    "frase": " Não existe algo como o destino , é apenas uma combinação de circunstância com circunstância , e quem e que faz essas circunstâncias ? É você",
+    "autor":"Rize"
+  }
+];
+
+export default function Mantras({ navigation }) {
     const [sound, setSound] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState(0);
     const [position, setPosition] = useState(0);
+    const [musicaAtual, setMusicaAtual] = useState(0); // Índice da música atual
     const isSeeking = useRef(false);
-
-    const audioFile = require('../../../assets/mantraCalmaria.mp3'); // Altere o caminho conforme necessário
 
     useEffect(() => {
         carregarAudio();
@@ -20,11 +39,15 @@ export default function AudioPlayer({ navigation }) {
                 sound.unloadAsync();
             }
         };
-    }, []);
+    }, [musicaAtual]); // Recarrega quando musicaAtual muda
 
     const carregarAudio = async () => {
+        if (sound) {
+            await sound.unloadAsync(); // Descarrega o áudio anterior
+        }
+        
         const { sound: novoSom } = await Audio.Sound.createAsync(
-            audioFile,
+            musicas[musicaAtual].audioFile,
             { shouldPlay: false },
             onPlaybackStatusUpdate
         );
@@ -64,6 +87,15 @@ export default function AudioPlayer({ navigation }) {
         }
     };
 
+    const proximaMusica = () => {
+        setMusicaAtual((prev) => (prev + 1) % musicas.length);
+        
+    };
+
+    const musicaAnterior = () => {
+        setMusicaAtual((prev) => (prev - 1 + musicas.length) % musicas.length);
+    };
+
     const formatarTempo = (ms) => {
         const totalSegundos = Math.floor(ms / 1000);
         const minutos = Math.floor(totalSegundos / 60);
@@ -71,16 +103,29 @@ export default function AudioPlayer({ navigation }) {
         return `${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
     };
 
+useFocusEffect(
+        React.useCallback(() => {
+            // Ao entrar na tela
+            return () => {
+                // Ao sair da tela
+                if (sound) {
+                    sound.pauseAsync();
+                }
+            };
+        }, [])
+    );
     return (
         <View style={styles.container}>
-            <Text>
-
-            </Text>
+            <View style={styles.fraseContainer}>
+            <Text style={styles.fraseText}>"{musicas[musicaAtual].frase}"</Text>
+            <Text style={styles.autorText}> —{musicas[musicaAtual].autor}</Text>
+            
+            </View>
             <Image
-                source={{uri:'https://f4.bcbits.com/img/a1908449552_16.jpg'}} // Altere para sua imagem
+                source={{uri: musicas[musicaAtual].img}}
                 style={styles.capa}
             />
-            <Text style={styles.nome}>Mantra da Calmaria</Text>
+            <Text style={styles.nome}>{musicas[musicaAtual].nome}</Text>
 
             <View style={styles.sliderContainer}>
                 <Text>{formatarTempo(position)}</Text>
@@ -101,6 +146,9 @@ export default function AudioPlayer({ navigation }) {
             </View>
 
             <View style={styles.controls}>
+                <TouchableOpacity onPress={musicaAnterior}>
+                    <Ionicons name="play-skip-back" size={30} color="#2e7d32" />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={retroceder}>
                     <Ionicons name="play-back" size={30} color="#2e7d32" />
                 </TouchableOpacity>
@@ -109,6 +157,9 @@ export default function AudioPlayer({ navigation }) {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={avancar}>
                     <Ionicons name="play-forward" size={30} color="#2e7d32" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={proximaMusica}>
+                    <Ionicons name="play-skip-forward" size={30} color="#2e7d32" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -123,6 +174,28 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent:'center'
     },
+    fraseContainer:{
+    width: '100%',
+    height: 'auto',
+    backgroundColor: '#f2fdf3',
+    justifyContent: 'center',
+    borderRadius: 16,
+    padding: 10,
+    shadowColor: '#000',
+    marginBottom:50
+    },
+      fraseText: {
+    fontSize: 24,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  autorText: {
+    fontSize: 16,
+    textAlign: 'right',
+    color: '#555',
+  },
+
     header: {
         width: '100%',
         flexDirection: 'row',
@@ -160,7 +233,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-around',
-        width: '60%',
-        marginTop: 30,
+        width: '90%',
+        marginBottom: 100,
     },
 });
